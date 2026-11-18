@@ -219,3 +219,42 @@ table.t th{font-size:12px;color:var(--ink3);font-weight:600;border-top:0}
 a.opt { text-decoration: none; color: inherit; }
 .pill-btn.dchip { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
 @media (max-width: 440px) { .top .brand small { display: none; } .top .pill-btn { padding: 6px 9px; font-size: 12px; } .top { gap: 6px; } }
+/* ---------- Buy medicines flow ---------- */
+.bsteps{display:flex;gap:4px;margin:6px 0 12px;overflow-x:auto;scrollbar-width:none}
+.bstep{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;font:inherit;font-size:11px;color:var(--ink3);padding:2px 0;cursor:pointer;white-space:nowrap}
+.bstep span{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:#fff;border:1.5px solid var(--line)}
+.bstep.on{color:var(--ink);font-weight:600}.bstep.on span{background:var(--coral);border-color:var(--coral);color:#fff}
+.bstep.done span{background:var(--green-l);border-color:#BFE6CF;color:var(--green)}
+.bstep:disabled{cursor:default;opacity:.6}
+.bitem{display:flex;gap:12px;align-items:flex-start}
+.bitem .grow{min-width:0}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--coral-l);border-color:var(--coral);color:var(--coral-d);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;font:inherit;font-size:12.5px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:#fff}
+.x2{border:0;background:none;color:var(--ink3);font-size:14px;cursor:pointer;padding:2px 4px}
+.switch{display:flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.hint{background:var(--amber-l);border-color:#F2DDB0;font-size:13.5px;margin-top:10px}
+.pcard{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px;font:inherit;cursor:pointer;color:var(--ink)}
+.pcard.on{border-color:var(--coral);background:var(--coral-l)}
+.pcard .radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;margin-right:10px}
+.pcard.on .radio{border-color:var(--coral);box-shadow:inset 0 0 0 4px #fff;background:var(--coral)}
+.ptotal{font-size:17px}
+.ptable{padding:4px 0}
+.prow{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
+.prow+.prow{border-top:1px solid var(--line)}
+.prow.on{background:var(--coral-l)}
+.prow:not([data-a]){cursor:default;opacity:.75}
+.pdot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block;margin-right:6px}
+.miss{color:var(--amber)}
+.placed{text-align:center;padding:10px 0 14px}
+.track{list-style:none;margin:0;padding:0}
+.track li{position:relative;padding:0 0 12px 26px;font-size:13.5px;color:var(--ink3)}
+.track li span{position:absolute;left:4px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--line);background:#fff}
+.track li:not(:last-child)::after{content:'';position:absolute;left:9px;top:17px;bottom:0;width:2px;background:var(--line)}
+.track li.done{color:var(--ink)}.track li.done span{background:var(--green);border-color:var(--green)}
+.track li.done::after{background:var(--green)!important}
+.track li.on{color:var(--ink);font-weight:600}.track li.on span{border-color:var(--coral);background:var(--coral);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,111,97,.5)}50%{box-shadow:0 0 0 6px rgba(255,111,97,0)}}
