@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HomeBridge · AI post-discharge recovery hub</title>
-<meta name="description" content="Concept prototype for Tata 1mg: upload every hospital paper, get one reconciled recovery plan.">
+<meta name="description" content="Upload every hospital paper, get one reconciled recovery plan.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1045,7 +1045,7 @@ const AI = {
         if (r.ok) { const j = await r.json(); if (j.ok) { this.mode = 'server'; this.label = j.model || 'Server AI'; return this.mode; } }
       }
     } catch (e) { /* fall through */ }
-    this.mode = 'offline'; this.label = 'Saved answer key';
+    this.mode = 'offline'; this.label = 'Not connected';
     return this.mode;
   },
   get live() { return this.mode === 'claude' || this.mode === 'server'; },
@@ -1181,11 +1181,11 @@ function relDays(iso, lang = 'en') {
 
 const I18N = {
   en: {
-    tag: 'Concept for Tata 1mg', lang: 'हिंदी', start: 'Start with the sample folder', own: 'Use my own papers',
+    tag: 'Concept for Tata 1mg', lang: 'हिंदी', start: 'Start with the sample folder', own: 'Add my papers',
     heroT: 'Every paper from the hospital, turned into one plan you can follow.',
     heroB: 'Upload the discharge summary, reports, prescriptions and bills. HomeBridge reads them all, keeps one current plan, and reminds you what to do next.',
     how1: 'Add every paper', how1b: 'Photos or PDFs, any order, any hospital', how2: 'AI builds one plan', how2b: 'Medicines, visits, tests, diet, bills — each line linked to its page', how3: 'Stay on track', how3b: 'Reminders, refills at the cheapest same salt, visit prep',
-    demo: 'Demo with a fictional patient. Please don’t upload real medical records. HomeBridge organises; your doctor and pharmacist decide.',
+    demo: 'Prototype: please don’t upload real medical records. HomeBridge organises; your doctor and pharmacist decide.',
     s1T: 'Whose recovery are we planning?', s1S: 'Pick the condition, or let the AI detect it from the discharge summary.', detect: 'Detect from my papers', detectB: 'The AI reads the discharge summary and suggests a checklist',
     dDis: 'Discharge date', dEnd: 'Treatment end date (if any)', cont: 'Continue', back: 'Back',
     s2T: 'Add the papers', s2S: 'Add photos or PDFs of everything: discharge summary, reports, prescriptions, bills. Any order.', choose: 'Choose photos or PDFs', chooseB: 'JPG, PNG or PDF · up to 15 files · 8 MB each', useSample: 'Use the sample folder (8 papers)', read: 'Read my papers',
@@ -1209,7 +1209,7 @@ const I18N = {
     s_NEW: 'New medicine', s_ACTIVE: 'Keep giving', s_CHANGED: 'Dose changed', s_STOPPED: 'Stop, don’t give', s_COMPLETE: 'Finished', s_ASK_DOCTOR: 'Ask doctor first', taken: 'taken today',
   },
   hi: {
-    tag: 'Tata 1mg के लिए कॉन्सेप्ट', lang: 'English', start: 'सैंपल फ़ोल्डर से शुरू करें', own: 'अपने कागज़ इस्तेमाल करें',
+    tag: 'Tata 1mg के लिए कॉन्सेप्ट', lang: 'English', start: 'सैंपल फ़ोल्डर से शुरू करें', own: 'मेरे कागज़ जोड़ें',
     heroT: 'अस्पताल का हर कागज़, एक ऐसी योजना में जिसे आप फॉलो कर सकें।',
     heroB: 'डिस्चार्ज सारांश, रिपोर्ट, पर्चे और बिल अपलोड करें। HomeBridge सब पढ़कर एक ताज़ा योजना रखता है और याद दिलाता है कि आगे क्या करना है।',
     how1: 'हर कागज़ जोड़ें', how1b: 'फोटो या PDF, किसी भी क्रम में', how2: 'AI एक योजना बनाता है', how2b: 'दवाएं, विज़िट, जांच, खाना, बिल — हर लाइन अपने पेज से जुड़ी', how3: 'ट्रैक पर रहें', how3b: 'रिमाइंडर, सबसे सस्ती वही दवा, विज़िट की तैयारी',
@@ -1280,10 +1280,9 @@ function pillSvg(look, size = 34) {
 // ---------------- Rail (desktop explainer) ----------------
 function renderRail() {
   const live = AI.live;
-  return `<div class="concept">Concept prototype for Tata 1mg</div>
-  <h1>HomeBridge</h1>
+  return `<h1>HomeBridge</h1>
   <p>An AI recovery hub for any diagnosis or treatment. Families upload every paper from the hospital; HomeBridge keeps one reconciled plan and helps them act on it for months after discharge.</p>
-  <div class="aimode"><span class="dot ${live ? 'live' : ''}"></span><div><b>AI mode: ${esc(AI.mode === 'checking' ? 'checking…' : AI.label)}</b><br><span class="muted small">${live ? 'Papers are read live; the sample can be checked against its answer key.' : 'Live AI is not available in this view, so the sample uses its saved answer key.'}</span></div></div>
+  <div class="aimode"><span class="dot ${live ? 'live' : ''}"></span><div><b>AI mode: ${esc(AI.mode === 'checking' ? 'checking…' : AI.label)}</b><br><span class="muted small">${live ? 'Papers are read live by the AI.' : 'Live AI is not connected right now.'}</span></div></div>
   <h2>How the AI works</h2>
   <ol class="pipe">
     <li class="ai"><b>1 · Read and sort</b>A vision model reads each photo or PDF and labels it: discharge summary, report, prescription, bill.</li>
@@ -1296,7 +1295,7 @@ function renderRail() {
   <p style="margin-top:10px"><button class="btn btn-sm btn-soft" data-a="go" data-to="rules" ${S.plan ? '' : 'disabled'}>⚖️ Knowledge bases, rule order and weights</button></p>
   <h2>Safety rules</h2>
   <ol class="pipe"><li>Every line links to the page it came from.</li><li>Unclear items go to “Ask doctor”, never guessed.</li><li>No diagnosis, dose change or advice.</li><li>Nothing is stored after the session.</li></ol>
-  <p class="foot">All data is synthetic: patient, hospital, doctors and prices are fictional. Not an official Tata 1mg product.</p>`;
+  <p class="foot">Prototype. Prices and catalogue are illustrative.</p>`;
 }
 
 // ---------------- Screens ----------------
@@ -1308,7 +1307,7 @@ function scrLanding() {
       <li><span class="n">2</span><div><b>${esc(t('how2'))}</b><div class="muted small">${esc(t('how2b'))}</div></div></li>
       <li><span class="n">3</span><div><b>${esc(t('how3'))}</b><div class="muted small">${esc(t('how3b'))}</div></div></li>
     </ol>
-    <div class="stack" style="margin:16px 0"><button class="btn btn-p btn-block" data-a="sample">✦ ${esc(t('start'))}</button><button class="btn btn-s btn-block" data-a="go" data-to="condition">${esc(t('own'))}</button></div>
+    <div class="stack" style="margin:16px 0"><button class="btn btn-p btn-block" data-a="go" data-to="condition">✦ ${esc(t('own'))}</button></div>
     <div class="banner">🛡️ <span>${esc(t('demo'))}</span></div>
   </div>`;
 }
@@ -1328,9 +1327,7 @@ function scrUpload() {
     <label class="btn btn-p btn-block cam"><input type="file" id="file2" accept="image/*" capture="environment" hidden>📷 ${esc(L('Take a photo of a paper', 'कागज़ की फोटो खींचें'))}</label>
     <label class="drop"><input type="file" id="file" accept="image/*,application/pdf,.txt" multiple hidden><div style="font-size:30px">📄</div><b>${esc(t('choose'))}</b><span class="muted small">${esc(t('chooseB'))}</span></label>
     ${S.docs.length ? `<div class="files">${S.docs.map((d) => `<div class="fthumb">${d.thumb ? `<img src="${d.thumb}" alt="">` : '<div class="paper-mini"></div>'}<b>${esc(d.id)}</b><span>${esc(d.title)}</span>${S.extractions[d.id] ? '' : `<button class="x" data-a="rmdoc" data-id="${d.id}" aria-label="Remove">✕</button>`}</div>`).join('')}</div>` : ''}
-    ${S.docs.length ? '' : `<button class="btn btn-soft btn-block" style="margin-top:12px" data-a="loadSample">${esc(t('useSample'))}</button>`}
-    ${!AI.live && S.docs.some((d) => !d.sample && !S.extractions[d.id]) ? `<div class="banner" style="margin-top:12px">ℹ️ <span>${esc(L('Live AI is not available in this view, so your own files will be kept in the vault but not read. The sample folder works fully with its saved answer key.', 'इस व्यू में लाइव AI उपलब्ध नहीं है; आपकी फ़ाइलें तिजोरी में रहेंगी पर पढ़ी नहीं जाएंगी।'))}</span></div>` : ''}
-    ${AI.live && S.docs.some((d) => d.sample) ? `<label class="row small" style="margin-top:12px"><input type="checkbox" data-in="useLive" ${S.useLive ? 'checked' : ''}> ${esc(L('Read the sample with live AI and check it against the answer key', 'सैंपल को लाइव AI से पढ़ें और उत्तर-कुंजी से मिलाएं'))}</label>` : ''}
+    ${!AI.live && S.docs.some((d) => !d.sample && !S.extractions[d.id]) ? `<div class="banner" style="margin-top:12px">ℹ️ <span>${esc(L('Live AI is not connected right now, so these files will be kept in the vault but not read.', 'इस व्यू में लाइव AI उपलब्ध नहीं है; आपकी फ़ाइलें तिजोरी में रहेंगी पर पढ़ी नहीं जाएंगी।'))}</span></div>` : ''}
   </div><div class="dock"><button class="btn btn-s" data-a="go" data-to="${S.plan ? 'plan' : 'condition'}">${esc(t('back'))}</button><button class="btn btn-p grow" data-a="process" ${fresh.length ? '' : 'disabled'}>${esc(t('read'))} (${fresh.length})</button></div>`;
 }
 
@@ -1338,11 +1335,11 @@ function scrReading() {
   const p = S.proc || { step: 0, files: {} };
   const steps = ['st1', 'st2', 'st3', 'st4', 'st5'];
   return `<div class="screen fade"><div class="h1">${esc(t('s3T'))}</div>
-    <p class="sub">${p.live ? `<span class="tag t-live">● ${esc(t('liveOn'))}: ${esc(AI.label)}</span>` : `<span class="tag t-key">${esc(t('keyOn'))}</span>`} <span class="muted small">${p.secs || 0}s</span></p>
+    <p class="sub">${p.live ? `<span class="tag t-live">● ${esc(t('liveOn'))}</span>` : ''} <span class="muted small">${p.secs || 0}s</span></p>
     <div class="card"><ol class="progress">${steps.map((s, i) => `<li class="${i < p.step ? 'done' : i === p.step ? 'on' : ''}"><span class="tick">${i < p.step ? '✓' : ''}</span>${esc(t(s))}</li>`).join('')}</ol></div>
-    <div class="doclist">${S.docs.map((d) => { const f = p.files[d.id] || {}; return `<div class="docrow"><span class="id">${esc(d.id)}</span><span class="grow">${esc(d.title)}${f.type ? `<br><span class="muted small">${esc(L(DOC_TYPE_LABEL[f.type]?.en || f.type, DOC_TYPE_LABEL[f.type]?.hi))} · ${esc(fmtDate(f.date, S.lang))}</span>` : ''}</span>${f.state === 'done' ? `<span class="tag ${f.src === 'live' ? 't-live' : 't-key'}">${f.src === 'live' ? '✓ AI' : '✓ key'}</span>` : f.state === 'err' ? '<span class="tag t-ask">!</span>' : f.state === 'skip' ? `<span class="tag t-complete">${esc(L('kept, not read', 'पढ़ा नहीं'))}</span>` : '<span class="spinner"></span>'}</div>`; }).join('')}</div>
+    <div class="doclist">${S.docs.map((d) => { const f = p.files[d.id] || {}; return `<div class="docrow"><span class="id">${esc(d.id)}</span><span class="grow">${esc(d.title)}${f.type ? `<br><span class="muted small">${esc(L(DOC_TYPE_LABEL[f.type]?.en || f.type, DOC_TYPE_LABEL[f.type]?.hi))} · ${esc(fmtDate(f.date, S.lang))}</span>` : ''}</span>${f.state === 'done' ? `<span class="tag t-live">✓</span>` : f.state === 'err' ? '<span class="tag t-ask">!</span>' : f.state === 'skip' ? `<span class="tag t-complete">${esc(L('kept, not read', 'पढ़ा नहीं'))}</span>` : '<span class="spinner"></span>'}</div>`; }).join('')}</div>
     ${p.error ? `<div class="alert red" style="margin-top:12px">⚠️ <span>${esc(p.error)}</span></div>` : ''}
-  </div>${p.live && !p.finished ? `<div class="dock"><button class="btn btn-s btn-block" data-a="skipLive">${esc(t('skip'))}</button></div>` : ''}`;
+  </div>`;
 }
 
 function scrChecklist() {
@@ -1350,7 +1347,6 @@ function scrChecklist() {
   const toneOf = (s) => (s === 'FOUND' ? 't-found' : s === 'NOT_YET' ? 't-yet' : 't-miss');
   const lab = (s) => (s === 'FOUND' ? t('found') : s === 'NOT_YET' ? t('notYet') : t('notFound'));
   return `<div class="screen fade"><div class="h1">${esc(t('s4T'))}</div><p class="sub">${esc(t('s4S'))}</p>
-    ${S.golden ? `<div class="alert" style="background:var(--green-l);border-color:#BFE6CF">✅ <span>${esc(L(`${S.golden.printed ? 'These are the printed sample papers. ' : ''}Live AI matched the answer key on ${S.golden.match} of ${S.golden.total} medicine statuses.`, `लाइव AI ने ${S.golden.total} में से ${S.golden.match} दवाओं की स्थिति उत्तर-कुंजी जैसी बताई।`))}${S.golden.diffs.length ? ' ' + esc(S.golden.diffs.map((d) => `${d.name}: key ${d.key}, live ${d.live}`).join('; ')) : ''}</span></div>` : ''}
     <div class="card"><div class="row"><b class="grow">${esc(L(j.name.en, j.name.hi))}</b><button class="btn btn-sm btn-s" data-a="go" data-to="condition">${esc(L('Change', 'बदलें'))}</button></div><div class="muted small">${esc(L(S.condition === 'auto' ? 'Detected from your discharge summary' : 'Chosen by you', S.condition === 'auto' ? 'डिस्चार्ज सारांश से पहचाना' : 'आपने चुना'))}</div></div>
     <div class="group-h">${esc(t('docsH'))}</div><div class="card">${g.docs.map((d) => `<div class="li"><span class="grow">${esc(d.en)}</span><span class="tag ${toneOf(d.status)}">${esc(lab(d.status))}</span></div>`).join('')}</div>
     <div class="group-h">${esc(t('itemsH'))}</div><div class="card">${g.items.map((it) => `<div class="li"><div class="grow">${esc(L(it.en, it.hi))}${it.status === 'NOT_FOUND' ? `<div class="row" style="margin-top:6px"><button class="btn btn-sm btn-soft" data-a="addq" data-q="${esc(it.q)}">${S.visitQs.includes(it.q) ? '✓ ' + esc(t('added')) : '+ ' + esc(t('addQ'))}</button></div>` : ''}</div><span class="tag ${toneOf(it.status)}">${esc(lab(it.status))}</span></div>`).join('')}</div>
@@ -1447,7 +1443,7 @@ function tabRecord() {
 function scrPlan() {
   const body = { today: tabToday, meds: tabMeds, visits: tabVisits, tests: tabTests, diet: tabDiet, care: tabCare, warn: tabWarn, bills: tabBills, team: tabTeam, treat: tabTreat, record: tabRecord }[S.tab]();
   const p = S.plan.patient || {};
-  return `<div class="screen fade" style="padding-top:12px"><div class="row" style="margin-bottom:10px"><div class="grow"><b>${esc(p.name || L('Patient', 'मरीज़'))}</b><div class="muted small">${esc(L(JOURNEYS[S.plan.condition].name.en, JOURNEYS[S.plan.condition].name.hi))}</div></div><span class="tag ${Object.values(S.sourceOf).includes('live') ? 't-live' : 't-key'}">${Object.values(S.sourceOf).includes('live') ? '● ' + esc(t('liveOn')) : esc(t('keyOn'))}</span></div>${body}</div>`;
+  return `<div class="screen fade" style="padding-top:12px"><div class="row" style="margin-bottom:10px"><div class="grow"><b>${esc(p.name || L('Patient', 'मरीज़'))}</b><div class="muted small">${esc(L(JOURNEYS[S.plan.condition].name.en, JOURNEYS[S.plan.condition].name.hi))}</div></div>${Object.values(S.sourceOf).includes('live') ? `<span class="tag t-live">● ${esc(t('liveOn'))}</span>` : ''}</div>${body}</div>`;
 }
 
 // ---------- S10: medicine box and cart ----------
@@ -1465,7 +1461,7 @@ function scrBox() {
       ${srcBtn(l.med.source.doc, l.med.source.quote)}</div>`;
   }).join('');
   return `<div class="screen fade"><div class="h1">${esc(t('s10T'))}</div><p class="sub">${esc(t('s10S'))}</p>
-    <div class="group-h">${esc(t('boxH'))}</div><div class="card">${S.home.length ? '' : `<div class="muted small" style="margin-bottom:8px">${esc(L('Tell us what is already at home so you only buy what is missing.', 'घर पर क्या है बताएं, ताकि सिर्फ कमी वाली दवा खरीदें।'))}</div><button class="btn btn-sm btn-soft" data-a="sampleBox">${esc(L('Use the sample case’s medicine box (6 items)', 'सैंपल केस का दवा डिब्बा लें (6 चीज़ें)'))}</button>`}${S.home.map((h, i) => `<div class="li"><span class="em">💊</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(h.unit)}</span></span><span class="stepper"><button data-a="qty" data-i="${i}" data-d="-1">−</button><span>${esc(h.qty)}</span><button data-a="qty" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
+    <div class="group-h">${esc(t('boxH'))}</div><div class="card">${S.home.length ? '' : `<div class="muted small" style="margin-bottom:8px">${esc(L('Tell us what is already at home so you only buy what is missing.', 'घर पर क्या है बताएं, ताकि सिर्फ कमी वाली दवा खरीदें।'))}</div><button class="btn btn-sm btn-soft" data-a="sampleBox">${esc(L('Quick-fill the medicine box (6 items)', 'दवा का डिब्बा जल्दी भरें (6 चीज़ें)'))}</button>`}${S.home.map((h, i) => `<div class="li"><span class="em">💊</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(h.unit)}</span></span><span class="stepper"><button data-a="qty" data-i="${i}" data-d="-1">−</button><span>${esc(h.qty)}</span><button data-a="qty" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
       <div class="row" style="margin-top:8px"><input id="newmed" class="searchbox" style="margin:0" placeholder="${esc(L('Add a medicine, e.g. Dolo 650', 'दवा जोड़ें, जैसे Dolo 650'))}"><button class="btn btn-sm btn-soft" data-a="addmed">+</button></div></div>
     <div class="group-h">${esc(t('buyH'))}</div>${lines || `<div class="empty">${esc(L('Nothing to buy: the box has enough.', 'कुछ नहीं खरीदना: डिब्बे में काफी है।'))}</div>`}
     ${lines ? `<div class="card"><div class="total"><span>${esc(L('To pay', 'भुगतान'))}</span><span>₹${inr(total)}</span></div><div class="muted small">${esc(t('illus'))}</div></div>` : ''}
@@ -1625,7 +1621,7 @@ function sheetHtml() {
       body = lines.map((l) => { const sl = squash(l); const hit = q && sl && (sl.includes(q.slice(0, 40)) || (q.length > 6 && q.includes(sl) && sl.length > 6)); return hit ? `<mark>${esc(l)}</mark>` : esc(l); }).join('\n');
     } else body = d.thumb ? `<img src="${d.thumb}" alt="${esc(d.title)}">` : esc(L('Preview not available.', 'झलक उपलब्ध नहीं।'));
     const ex = S.extractions[d.id];
-    return `<div class="sheet-bg" data-a="close"><div class="sheet" data-stop><div class="grab"></div><div class="row"><b class="grow">${esc(d.id)} · ${esc(d.title)}</b><button class="btn btn-sm btn-s" data-a="close">✕</button></div><div class="muted small" style="margin:2px 0 10px">${esc(fmtDate(d.date, S.lang))}${S.sourceOf[d.id] ? ' · ' + (S.sourceOf[d.id] === 'live' ? 'read by ' + AI.label : 'answer key') : ''}</div>${ex?.summary_en ? `<div class="note" style="margin-bottom:10px">${esc(L(ex.summary_en, ex.summary_hi))}</div>` : ''}<div class="paper">${body}</div></div></div>`;
+    return `<div class="sheet-bg" data-a="close"><div class="sheet" data-stop><div class="grab"></div><div class="row"><b class="grow">${esc(d.id)} · ${esc(d.title)}</b><button class="btn btn-sm btn-s" data-a="close">✕</button></div><div class="muted small" style="margin:2px 0 10px">${esc(fmtDate(d.date, S.lang))}${S.sourceOf[d.id] === 'live' ? ' · read by AI' : ''}</div>${ex?.summary_en ? `<div class="note" style="margin-bottom:10px">${esc(L(ex.summary_en, ex.summary_hi))}</div>` : ''}<div class="paper">${body}</div></div></div>`;
   }
   if (S.sheet.kind === 'order') return `<div class="sheet-bg" data-a="close"><div class="sheet" data-stop><div class="grab"></div><div style="font-size:40px;text-align:center">✅</div><div class="h2" style="text-align:center">${esc(L('Order placed (demo)', 'ऑर्डर हो गया (डेमो)'))}</div><p class="sub" style="text-align:center">HB-${S.sheet.id} · ₹${inr(S.sheet.total)}<br>${esc(L('A pharmacist checks every item against your papers before dispatch. Refill reminders are on.', 'भेजने से पहले फार्मासिस्ट हर दवा कागज़ों से मिलाएगा। रिफिल रिमाइंडर चालू हैं।'))}</p><button class="btn btn-p btn-block" data-a="go" data-to="plan">${esc(t('toPlan'))}</button></div></div>`;
   return '';
@@ -1643,7 +1639,7 @@ function render() {
   const hasNav = !!S.plan && !['landing', 'condition', 'reading'].includes(S.screen);
   const inner = SCREENS[S.screen]();
   app.className = 'app' + (hasNav ? ' with-nav' : '') + (S.simple ? ' simple' : '');
-  app.innerHTML = `<header class="top"><button class="brand" data-a="home"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#FF6F61"/><path d="M8 26c4-9 20-9 24 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M13 26v-4.5M20 26v-6.5M27 26v-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 28.5h28" stroke="#FFD3CD" stroke-width="2.4" stroke-linecap="round"/></svg><span><b>HomeBridge</b><small>${esc(t('tag'))}</small></span></button>${DEMO_DATE ? `<span class="pill-btn dchip" title="Demo date pinned with ?today=">📅 ${Number(T_ISO.slice(8))} ${MONTHS[Number(T_ISO.slice(5, 7)) - 1]}</span>` : ''}<button class="pill-btn ${S.simple ? 'on' : ''}" data-a="simple" title="${esc(t('simple'))}">👓 ${esc(S.lang === 'hi' ? 'आसान' : 'Simple')}</button><button class="pill-btn" data-a="lang">${esc(t('lang'))}</button></header>
+  app.innerHTML = `<header class="top"><button class="brand" data-a="home"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#FF6F61"/><path d="M8 26c4-9 20-9 24 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M13 26v-4.5M20 26v-6.5M27 26v-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 28.5h28" stroke="#FFD3CD" stroke-width="2.4" stroke-linecap="round"/></svg><span><b>HomeBridge</b></span></button>${DEMO_DATE ? `<span class="pill-btn dchip" title="Demo date pinned with ?today=">📅 ${Number(T_ISO.slice(8))} ${MONTHS[Number(T_ISO.slice(5, 7)) - 1]}</span>` : ''}<button class="pill-btn" data-a="lang">${esc(t('lang'))}</button></header>
     ${S.screen === 'plan' ? renderTabs() : ''}
     <main class="scroll">${inner.split('</div><div class="dock">')[0]}${inner.includes('</div><div class="dock">') ? '</div>' : ''}</main>
     ${inner.includes('</div><div class="dock">') ? '<div class="dock">' + inner.split('</div><div class="dock">')[1] : ''}
@@ -1832,7 +1828,7 @@ document.addEventListener('change', (e) => {
 });
 
 render();
-AI.init().then(() => { S.useLive = AI.live; render(); });
+AI.init().then(() => { S.useLive = AI.live; if (location.hash === '#backup') { S.condition = 'auto'; loadSample(); go('upload'); } else render(); });
 
 // ---------- Transparency: how HomeBridge decides ----------
 function scrRules() {
