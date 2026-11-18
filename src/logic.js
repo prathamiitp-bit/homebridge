@@ -249,6 +249,97 @@ function buildCart(plan, home, horizon = 30) {
   return { lines, sos, removeFromBox, onHold, horizon };
 }
 
+// ---------- Medicine bundle: quantities, platforms and the cheapest way to buy ----------
+// PRICES, FEES, STOCK AND DELIVERY TIMES ARE ILLUSTRATIVE. In production they come from partner APIs.
+const PLATFORMS = [
+  { id: '1mg', name: 'Tata 1mg', short: '1mg', color: '#FF6F61', disc: [0.14, 0.24], fee: (s) => (s >= 499 ? 0 : 49), eta: 'Tomorrow by 9 pm', perk: 'Pharmacist checks every item against your prescription' },
+  { id: 'pharmeasy', name: 'PharmEasy', short: 'PharmEasy', color: '#10847E', disc: [0.09, 0.25], fee: (s) => (s >= 699 ? 0 : 59), eta: 'In 2 days', perk: '' },
+  { id: 'apollo', name: 'Apollo 24|7', short: 'Apollo', color: '#0E5BA8', disc: [0.06, 0.16], fee: (s) => (s >= 500 ? 0 : 40), eta: 'Today, within 4 hours', perk: 'Express delivery' },
+  { id: 'netmeds', name: 'Netmeds', short: 'Netmeds', color: '#24AEB1', disc: [0.10, 0.22], fee: (s) => (s >= 499 ? 0 : 49), eta: 'In 2–3 days', perk: '' },
+  { id: 'truemeds', name: 'Truemeds', short: 'Truemeds', color: '#2E6BE6', disc: [0.08, 0.14], gdisc: [0.32, 0.52], fee: (s) => (s >= 500 ? 0 : 49), eta: 'In 3 days', perk: 'Generic substitutes' },
+  { id: 'jan', name: 'Jan Aushadhi Kendra', short: 'Jan Aushadhi', color: '#1E7B34', pickup: true, fee: () => 0, eta: 'Pick up today', perk: 'Government generic store' },
+  { id: 'local', name: 'Local chemist', short: 'Chemist', color: '#7A5AF8', pickup: true, fee: () => 0, eta: 'Pick up now', perk: 'Walk-in, MRP minus a small discount' },
+];
+function hashFrac(s) { let x = 2166136261; for (const ch of s) { x ^= ch.charCodeAt(0); x = Math.imul(x, 16777619) >>> 0; } return (x % 10000) / 10000; }
+const isGeneric = (c) => /generic/i.test(c.product);
+function platformPrice(p, c) {
+  if (p.id === 'jan') return c.jan ?? null;
+  const mrp = c.local;
+  if (p.id === 'local') return Math.round(mrp * 0.95);
+  if (hashFrac(`${p.id}|${c.product}|stock`) < 0.1) return null; // out of stock
+  const [a, b] = (p.gdisc && isGeneric(c)) ? p.gdisc : p.disc;
+  return Math.round(mrp * (1 - (a + (b - a) * hashFrac(`${p.id}|${c.product}`))));
+}
+function packsFor(c, perDay, days, have) {
+  if (c.per_pack != null) { const need = Math.max(0, Math.ceil((perDay || 1) * days) - (have || 0)); return { packs: Math.ceil(need / c.per_pack), units: need, unit: 'tablets' }; }
+  return { packs: Math.max(0, Math.ceil(days / c.days_per_pack - (have || 0) - 1e-9)), units: null, unit: 'packs' };
+}
+// One line per medicine the papers say to take now. Edits (days, packs, variant, include) come from `ed`.
+function bundleItems(plan, home, ed = {}) {
+  const items = [];
+  for (const m of plan.meds) {
+    if (!['ACTIVE', 'NEW', 'CHANGED'].includes(m.status)) continue;
+    const e = ed[m.key] || {};
+    const variants = catalogueOptions(m.salt, m.strength);
+    const perDay = unitsPerDay(m.dose_pattern);
+    const left = m.long_term || !m.duration_days ? 30 : Math.max(0, m.daysLeft ?? 30);
+    const days = e.days ?? Math.min(30, left || 30);
+    const homeItem = home.find((h) => saltKey(normaliseSalt(h.name, h.salt).salt) === m.key);
+    const have = homeItem ? Number(homeItem.qty) || 0 : 0;
+    const include = e.include ?? (!m.sos && variants.length > 0);
+    items.push({ key: m.key, med: m, variants, perDay, days, left, have, homeItem, include, variant: e.variant || 'cheapest', packsOverride: e.packs, sos: !!m.sos, extra: false });
+  }
+  for (const [k, e] of Object.entries(ed)) if (e.extra && !items.some((i) => i.key === k)) {
+    const variants = CATALOGUE.filter((c) => saltKey(c.salt) === k);
+    items.push({ key: k, med: { name: variants[0]?.salt || k, key: k, source: { doc: '', quote: '' } }, variants, perDay: 1, days: e.days ?? 30, have: 0, include: e.include ?? true, variant: e.variant || 'cheapest', packsOverride: e.packs ?? 1, extra: true });
+  }
+  return items;
+}
+// Cheapest offer for one item on one platform, honouring the brand/generic choice
+function offerOn(p, it) {
+  let best = null;
+  for (const c of it.variants) {
+    if (it.variant === 'generic' && !isGeneric(c)) continue;
+    if (it.variant === 'brand' && isGeneric(c) && it.variants.some((v) => !isGeneric(v))) continue;
+    const price = platformPrice(p, c); if (price == null) continue;
+    const q = packsFor(c, it.perDay, it.days, it.have);
+    const packs = it.packsOverride ?? (it.sos ? (it.have ? 0 : 1) : q.packs);
+    if (!packs) return { product: c, price, packs: 0, total: 0 };
+    const total = price * packs;
+    if (!best || total < best.total) best = { product: c, price, packs, total, units: q.units };
+  }
+  return best;
+}
+// Every platform on its own, plus the best split across up to 3 platforms
+function compareBundle(items) {
+  const lines = items.filter((i) => i.include);
+  const perPlatform = PLATFORMS.map((p) => {
+    const offers = lines.map((it) => ({ it, o: offerOn(p, it) }));
+    const have = offers.filter((x) => x.o && x.o.packs > 0), missing = offers.filter((x) => !x.o).map((x) => x.it);
+    const sub = have.reduce((s, x) => s + x.o.total, 0);
+    const fee = sub ? p.fee(sub) : 0;
+    return { p, offers, sub, fee, total: sub + fee, missing, complete: !missing.length };
+  });
+  const need = lines.filter((it) => PLATFORMS.some((p) => (offerOn(p, it)?.packs ?? 0) > 0));
+  let best = null, tried = 0;
+  for (let mask = 1; mask < (1 << PLATFORMS.length); mask++) {
+    const ps = PLATFORMS.filter((_, i) => mask & (1 << i)); if (ps.length > 3) continue;
+    tried++;
+    const pick = []; let ok = true;
+    for (const it of need) {
+      let b = null; for (const p of ps) { const o = offerOn(p, it); if (o && o.packs && (!b || o.total < b.o.total)) b = { p, o }; }
+      if (!b) { ok = false; break; } pick.push({ it, ...b });
+    }
+    if (!ok) continue;
+    const groups = ps.map((p) => { const its = pick.filter((x) => x.p === p); const sub = its.reduce((s, x) => s + x.o.total, 0); return { p, its, sub, fee: its.length ? p.fee(sub) : 0 }; }).filter((g) => g.its.length);
+    const total = groups.reduce((s, g) => s + g.sub + g.fee, 0);
+    if (!best || total < best.total || (total === best.total && groups.length < best.groups.length)) best = { groups, total };
+  }
+  const mrp = lines.reduce((s, it) => { const brand = it.variants.find((v) => !isGeneric(v)) || it.variants[0]; if (!brand) return s; const q = packsFor(brand, it.perDay, it.days, it.have); const packs = it.packsOverride ?? (it.sos ? (it.have ? 0 : 1) : q.packs); return s + brand.local * packs; }, 0);
+  const complete = perPlatform.filter((x) => x.complete && x.sub).sort((a, b) => a.total - b.total);
+  return { perPlatform: perPlatform.sort((a, b) => (b.complete - a.complete) || (a.total - b.total)), bestSingle: complete[0] || null, split: best, tried, mrp };
+}
+
 // ---------- Today and reminders ----------
 const SLOTS = ['morning', 'afternoon', 'night'];
 function buildToday(plan) {
