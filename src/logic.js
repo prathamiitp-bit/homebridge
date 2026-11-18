@@ -300,7 +300,7 @@ const STOP = new Set('the a an and or of to in on for with is are was be by at a
 function buildIndex(docs) {
   const chunks = [];
   for (const d of docs) {
-    const parts = (d.text || '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    const parts = (d.text || d.searchText || '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
     parts.forEach((p, i) => chunks.push({ id: `${d.id}·${i + 1}`, doc: d.id, title: d.title, date: d.date, text: p, toks: tokenize(p) }));
   }
   const df = {};
@@ -425,9 +425,10 @@ async function askLive(question, hits, plan, lang) {
   const planBrief = JSON.stringify({
     medicines: plan.meds.map((m) => ({ name: m.name, status: m.status, dose: m.dose_pattern, sos: m.sos, timing: m.timing, from: m.source.doc })),
     upcoming: plan.timeline.filter((x) => x.due >= T_ISO).map((x) => ({ what: x.name, due: x.due, from: x.source.doc })),
+    bills: plan.bills.map((b) => ({ what: b.what, amount: b.amount, from: b.doc })),
   });
   const prompt = `You answer a family's question using ONLY their own hospital papers below and the reconciled plan. Today is ${T_ISO}.
-Rules: answer in ${lang === 'hi' ? 'simple Hindi (Devanagari)' : 'plain English'}, at most 4 short sentences. After each fact put its source in square brackets like [D3]. If the papers do not answer it, reply exactly "NOT_IN_PAPERS". Never give medical advice, never suggest changing, starting or stopping a medicine; if asked, say it is a question for the doctor.
+Rules: answer in ${lang === 'hi' ? 'simple Hindi (Devanagari)' : 'plain English'}, at most 4 short sentences. Write dates like 20 Jan 2027. After each fact put its source in square brackets like [D3]. If the papers do not answer it, reply exactly "NOT_IN_PAPERS". Never give medical advice, never suggest changing, starting or stopping a medicine; if asked, say it is a question for the doctor.
 PLAN: ${planBrief}
 PAPERS:
 ${ctx}
@@ -437,13 +438,38 @@ QUESTION: ${question}`;
 
 // Offline answer: plan-aware shortcuts plus the best matching lines
 function answerOffline(question, hits, plan, lang) {
+  const pf = planAnswer(question, plan, lang); if (pf) return pf;
+  const q = norm(question);
+  const L = (en, hi) => (lang === 'hi' ? hi : en);
+  return answerFromSearch(question, hits, plan, lang, q, L);
+}
+
+// Searchable text for a photographed paper, built from what the AI read (every line is a quote from the page)
+function extractionText(x) {
+  const block = (arr, f) => (arr || []).map(f).filter(Boolean).join('\n');
+  return [x.summary_en, block(x.diagnosis, (i) => i.quote || i.text), block(x.treatment, (i) => i.quote || i.text), block(x.medicines, (m) => m.quote || m.name), block(x.visits, (v) => v.quote), block(x.tests, (t) => t.quote), block(x.results, (r) => r.quote || `${r.test} ${r.value}`), block(x.diet, (d) => d.quote || d.en), block(x.precautions, (d) => d.quote || d.en), block(x.exercises, (d) => d.quote || d.en), block(x.warning_signs, (d) => d.quote || d.en), block(x.bills, (b) => b.quote || `${b.what} Rs ${b.amount}`), block(x.contacts, (c) => c.quote || `${c.name} ${c.phone || ''}`)].filter(Boolean).join('\n\n');
+}
+
+// Plan facts: answered by calculation from the reconciled plan, never by search
+function planAnswer(question, plan, lang) {
+  if (!plan) return null;
   const q = norm(question);
   const L = (en, hi) => (lang === 'hi' ? hi : en);
   const fmt = (iso) => fmtDate(iso, lang);
+  if (/bill|cost|spen|money|paid|pay|expens|total|claim|insur|खर्च|बिल|पैसे/.test(q)) {
+    if (!plan.bills.length) return { text: L('No bills were found in your papers yet.', 'आपके कागज़ों में अभी कोई बिल नहीं मिला।'), cites: [] };
+    const tot = plan.bills.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    const byDoc = {}; for (const b of plan.bills) { const k = b.doc; (byDoc[k] = byDoc[k] || { doc: k, what: b.what, amt: 0 }).amt += Number(b.amount) || 0; }
+    const parts = Object.values(byDoc).map((x) => `${x.what}: ₹${inr(x.amt)} [${x.doc}]`);
+    return { text: L(`You have spent ₹${inr(tot)} in total across ${plan.bills.length} bill${plan.bills.length > 1 ? 's' : ''}. ${parts.join('; ')}.`, `कुल खर्च ₹${inr(tot)} (${plan.bills.length} बिल)। ${parts.join('; ')}।`), cites: Object.keys(byDoc) };
+  }
   if (/pet|scan|स्कैन/.test(q)) { const t = plan.tests.find((x) => /pet|scan/i.test(x.name)); if (t) return { text: L(`The PET-CT is due on ${fmt(t.due)} [${t.source.doc}].`, `PET-CT ${fmt(t.due)} को होना है [${t.source.doc}]।`), cites: [t.source.doc] }; }
   if (/thyroid|tsh|थायराइड/.test(q)) { const t = plan.tests.find((x) => /tsh/i.test(x.name)); if (t) return { text: L(`The next thyroid test (TSH) is due on ${fmt(t.due)}, 6 months after the last one [${t.source.doc}${t.basis ? ', ' + t.basis.doc : ''}].`, `अगला थायराइड टेस्ट (TSH) ${fmt(t.due)} को है [${t.source.doc}]।`), cites: [t.source.doc] }; }
-  if (/bill|cost|spen|money|paid|claim|खर्च|बिल/.test(q)) { const tot = plan.bills.reduce((s, b) => s + b.amount, 0); return { text: L(`Your papers show ${plan.bills.length} bills totalling ₹${inr(tot)} [${[...new Set(plan.bills.map((b) => b.doc))].join(', ')}].`, `आपके कागज़ों में ${plan.bills.length} बिल हैं, कुल ₹${inr(tot)}।`), cites: plan.bills.map((b) => b.doc) }; }
   if (/next (visit|appointment|opd)|doctor|डॉक्टर/.test(q)) { const v = plan.timeline.find((x) => x.kind === 'visit' && x.due >= T_ISO); if (v) return { text: L(`The next visit is ${v.name} on ${fmt(v.due)} [${v.source.doc}].`, `अगली विज़िट ${v.name}, ${fmt(v.due)} को [${v.source.doc}]।`), cites: [v.source.doc] }; }
+  return null;
+}
+
+function answerFromSearch(question, hits, plan, lang, q, L) {
   const terms = new Set([...expandQuery(question).base, ...expandQuery(question).extra]);
   const medHits = plan.meds.filter((m) => ['ACTIVE', 'NEW', 'CHANGED'].includes(m.status) && tokenize(`${m.name} ${m.form || ''} ${m.salt}`).some((w) => terms.has(w)));
   if (medHits.length) return { text: medHits.map((m) => L(`${m.name}: ${m.sos ? 'only when needed (SOS)' : m.dose_pattern}${m.timing ? ', ' + m.timing : ''}${m.daysLeft ? `, ${m.daysLeft} days left` : m.long_term ? ', long term' : ''} [${m.source.doc}].`, `${m.name}: ${m.sos ? 'ज़रूरत होने पर (SOS)' : m.dose_pattern}${m.timing ? ', ' + m.timing : ''} [${m.source.doc}]।`)).join(' '), cites: medHits.map((m) => m.source.doc) };
