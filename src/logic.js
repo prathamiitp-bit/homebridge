@@ -349,7 +349,7 @@ const AI = {
         if (r.ok) { const j = await r.json(); if (j.ok) { this.mode = 'server'; this.label = j.model || 'Server AI'; return this.mode; } }
       }
     } catch (e) { /* fall through */ }
-    this.mode = 'offline'; this.label = 'Saved answer key';
+    this.mode = 'offline'; this.label = 'Not connected';
     return this.mode;
   },
   get live() { return this.mode === 'claude' || this.mode === 'server'; },
