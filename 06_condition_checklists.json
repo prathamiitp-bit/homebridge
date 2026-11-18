@@ -1,0 +1,270 @@
+{
+  "head_neck_cancer": {
+    "name": {
+      "en": "Head and neck cancer, after surgery and radiotherapy",
+      "hi": "सिर और गर्दन का कैंसर, सर्जरी और रेडियोथेरेपी के बाद"
+    },
+    "docs": [
+      {
+        "type": "discharge_summary",
+        "en": "Discharge summary"
+      },
+      {
+        "type": "histopathology",
+        "en": "Histopathology report"
+      },
+      {
+        "type": "rt_summary",
+        "en": "Radiotherapy summary"
+      },
+      {
+        "type": "prescription",
+        "en": "Latest OPD prescription"
+      },
+      {
+        "type": "lab_report",
+        "en": "Blood test report"
+      },
+      {
+        "type": "imaging",
+        "en": "PET-CT / scan report",
+        "due_note": "Expected after the first PET-CT"
+      }
+    ],
+    "items": [
+      {
+        "id": "pet",
+        "en": "Baseline PET-CT or scan after treatment",
+        "hi": "इलाज के बाद पहला PET-CT स्कैन",
+        "keys": [
+          "pet",
+          "pet-ct",
+          "scan",
+          "mri"
+        ],
+        "q": "When should the first scan after treatment be done?"
+      },
+      {
+        "id": "tsh",
+        "en": "Thyroid test (TSH) at regular intervals",
+        "hi": "नियमित थायराइड (TSH) जांच",
+        "keys": [
+          "tsh",
+          "thyroid"
+        ],
+        "q": "How often should his thyroid (TSH) be checked?"
+      },
+      {
+        "id": "dental",
+        "en": "Dental check-up",
+        "hi": "दांतों की जांच",
+        "keys": [
+          "dental",
+          "dentist"
+        ],
+        "q": "When should he see the dentist?"
+      },
+      {
+        "id": "rtopd",
+        "en": "Radiation oncology follow-up",
+        "hi": "रेडिएशन ऑन्कोलॉजी फॉलो-अप",
+        "keys": [
+          "radiation oncology"
+        ],
+        "q": "When is the next radiation oncology visit?"
+      },
+      {
+        "id": "jaw",
+        "en": "Jaw-opening exercises",
+        "hi": "मुंह खोलने की कसरत",
+        "keys": [
+          "jaw"
+        ],
+        "q": "Which jaw exercises should he do, and how often?"
+      },
+      {
+        "id": "fluoride",
+        "en": "Fluoride and mouth care",
+        "hi": "फ्लोराइड और मुंह की देखभाल",
+        "keys": [
+          "fluoride"
+        ],
+        "q": "Does he need fluoride gel, and for how long?"
+      },
+      {
+        "id": "speech",
+        "en": "Speech and swallow therapy",
+        "hi": "बोलने और निगलने की थेरेपी",
+        "keys": [
+          "speech",
+          "therapist",
+          "slp"
+        ],
+        "q": "Should he see a speech and swallow therapist?"
+      },
+      {
+        "id": "weight",
+        "en": "Diet and weight checks",
+        "hi": "खाना और वज़न की जांच",
+        "keys": [
+          "weigh",
+          "weight",
+          "protein"
+        ],
+        "q": "What weight should we watch for?"
+      },
+      {
+        "id": "tobacco",
+        "en": "No tobacco, alcohol or areca nut",
+        "hi": "तंबाकू, शराब, सुपारी बंद",
+        "keys": [
+          "tobacco",
+          "areca"
+        ],
+        "q": "Any advice on tobacco or alcohol?"
+      }
+    ]
+  },
+  "heart_attack": {
+    "name": {
+      "en": "Heart attack treated with angioplasty",
+      "hi": "हार्ट अटैक, एंजियोप्लास्टी के बाद"
+    },
+    "docs": [
+      {
+        "type": "discharge_summary",
+        "en": "Discharge summary"
+      },
+      {
+        "type": "prescription",
+        "en": "Latest prescription"
+      },
+      {
+        "type": "lab_report",
+        "en": "Blood test report"
+      },
+      {
+        "type": "imaging",
+        "en": "Echo or angiography report"
+      }
+    ],
+    "items": [
+      {
+        "id": "antiplatelet",
+        "en": "Blood thinners",
+        "hi": "खून पतला करने की दवा",
+        "keys": [
+          "aspirin",
+          "clopidogrel",
+          "ticagrelor",
+          "prasugrel"
+        ],
+        "q": "How long should he take the blood thinners?"
+      },
+      {
+        "id": "statin",
+        "en": "Cholesterol medicine",
+        "hi": "कोलेस्ट्रॉल की दवा",
+        "keys": [
+          "statin",
+          "atorvastatin",
+          "rosuvastatin"
+        ],
+        "q": "Should he continue the cholesterol medicine?"
+      },
+      {
+        "id": "cardio",
+        "en": "Cardiology follow-up",
+        "hi": "कार्डियोलॉजी फॉलो-अप",
+        "keys": [
+          "cardiology"
+        ],
+        "q": "When is the cardiology review?"
+      },
+      {
+        "id": "lipid",
+        "en": "Repeat lipid test",
+        "hi": "लिपिड जांच",
+        "keys": [
+          "lipid",
+          "cholesterol"
+        ],
+        "q": "When should the lipid test be repeated?"
+      },
+      {
+        "id": "rehab",
+        "en": "Cardiac rehab and activity plan",
+        "hi": "कार्डियक रिहैब",
+        "keys": [
+          "rehab",
+          "walk",
+          "activity"
+        ],
+        "q": "What activity is safe, and is cardiac rehab advised?"
+      },
+      {
+        "id": "chest",
+        "en": "Chest-pain warning signs",
+        "hi": "सीने में दर्द के चेतावनी संकेत",
+        "keys": [
+          "chest pain"
+        ],
+        "q": "What should we do if chest pain returns?"
+      }
+    ]
+  },
+  "general": {
+    "name": {
+      "en": "After any hospital stay",
+      "hi": "किसी भी अस्पताल में भर्ती के बाद"
+    },
+    "docs": [
+      {
+        "type": "discharge_summary",
+        "en": "Discharge summary"
+      },
+      {
+        "type": "prescription",
+        "en": "Latest prescription"
+      },
+      {
+        "type": "bill",
+        "en": "Final bill"
+      }
+    ],
+    "items": [
+      {
+        "id": "followup",
+        "en": "A follow-up visit date",
+        "hi": "अगली जांच की तारीख",
+        "keys": [
+          "follow-up",
+          "review",
+          "opd"
+        ],
+        "q": "When is the follow-up visit?"
+      },
+      {
+        "id": "warn",
+        "en": "Warning signs to watch",
+        "hi": "चेतावनी संकेत",
+        "keys": [
+          "emergency",
+          "warning",
+          "return"
+        ],
+        "q": "Which symptoms mean we should come back?"
+      },
+      {
+        "id": "diet",
+        "en": "Diet advice",
+        "hi": "खाने की सलाह",
+        "keys": [
+          "diet",
+          "food"
+        ],
+        "q": "Any food restrictions?"
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+word,also_matches
+mouthwash,gargle; rinse; benzydamine; chlorhexidine
+gargle,mouthwash; rinse
+scan,pet-ct; pet; ct; mri
+pet,pet-ct; scan
+thyroid,tsh
+tsh,thyroid
+bill,rs; total; receipt; amount
+money,bill; total; paid
+claim,insurance; reimbursement; cashless
+pain,paracetamol; lignocaine; sos
+dry,pilocarpine
+doctor,opd; review; follow-up
+visit,opd; review; follow-up
+next,after; review; follow-up
+food,diet; meals
+eat,diet; meals; food
+exercise,jaw; swallowing; exercises
+teeth,dental; brush; fluoride
+emergency,warning; bleeding; fever
+दवा,medicine; tab
+स्कैन,scan; pet-ct
+बिल,bill; total
+थायराइड,tsh; thyroid
+खाना,diet; food
+कसरत,exercises; jaw
+डॉक्टर,opd; review
+कुल्ला,mouthwash; gargle
+दर्द,pain; sos
+बुखार,fever
+खर्च,bill; total
