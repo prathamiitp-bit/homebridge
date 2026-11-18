@@ -25,3 +25,28 @@ html = f"""<!DOCTYPE html>
 """
 pathlib.Path('index.html').write_text(html)
 print(len(html))
+
+papers = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HomeBridge · Sample papers to print (fictional)</title>
+<style>
+{(src/'papers.css').read_text()}
+</style>
+</head>
+<body>
+<div class="bar"><b>Sample papers to print</b><span id="dt"></span><button onclick="window.print()">🖨️ Print all 8</button><a class="ghost" href="./">← Back to the app</a></div>
+<div id="papers"></div>
+<script>
+{(src/'data.js').read_text()}
+{(src/'papers.js').read_text()}
+document.getElementById('papers').innerHTML = renderPapers();
+document.getElementById('dt').textContent = 'Dated for ' + paperDate(T_ISO) + (DEMO_DATE ? ' (demo date)' : ' (today)') + ' · open with ?today=YYYY-MM-DD for another day';
+</script>
+</body>
+</html>
+"""
+pathlib.Path('papers.html').write_text(papers)
+print('papers', len(papers))

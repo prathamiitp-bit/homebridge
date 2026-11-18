@@ -222,6 +222,13 @@ table.t th{font-size:12px;color:var(--ink3);font-weight:600;border-top:0}
 .simple .tag{font-size:13.5px;padding:4px 10px}.simple .dchip{font-size:14px;padding:6px 10px}
 .simple .small{font-size:15px}.simple .looks{font-size:15px}
 .simple .tab{font-size:15px;padding:8px 14px}
+/* live demo additions */
+.cam { margin-bottom: 10px; display: flex; justify-content: center; gap: 8px; cursor: pointer; }
+.wa-live { margin-top: 12px; }
+.wa .meta a { color: #128C7E; font-weight: 600; text-decoration: none; }
+a.opt { text-decoration: none; color: inherit; }
+.pill-btn.dchip { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
+@media (max-width: 440px) { .top .brand small { display: none; } .top .pill-btn { padding: 6px 9px; font-size: 12px; } .top { gap: 6px; } }
 
 </style>
 </head>
@@ -236,7 +243,19 @@ table.t th{font-size:12px;color:var(--ink3);font-weight:600;border-top:0}
 
 const DAY = 864e5;
 function isoDay(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
-const TODAY = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+// Demo date: open the link with ?today=YYYY-MM-DD to pin "today" (kept for this browser);
+// ?today=off goes back to the real date. Printed sample papers carry the date they were made for.
+const DEMO_DATE = (() => {
+  let v = null;
+  try {
+    const q = new URLSearchParams(location.search).get('today');
+    if (q === 'off') localStorage.removeItem('hb_today');
+    else if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) localStorage.setItem('hb_today', q);
+    v = localStorage.getItem('hb_today');
+  } catch (e) { try { v = new URLSearchParams(location.search).get('today'); } catch (e2) { v = null; } }
+  return v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+})();
+const TODAY = (() => { const d = DEMO_DATE ? new Date(DEMO_DATE + 'T00:00:00') : new Date(); d.setHours(0, 0, 0, 0); return d; })();
 const T_ISO = isoDay(TODAY);
 function addDaysIso(iso, n) { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + Number(n)); return isoDay(d); }
 function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / DAY); }
@@ -1076,6 +1095,7 @@ Today is ${T_ISO}. Return ONLY JSON with exactly this shape:
 "summary_en":"one plain sentence for a worried family member","summary_hi":"the same sentence in simple Hindi (Devanagari)"}
 Rules:
 - dose_pattern is morning-afternoon-night counts. OD=1-0-0, BD=1-0-1, TDS=1-1-1, HS or bedtime=0-0-1. "x 5 days" -> duration_days 5. "long term"/"continue" with no end -> long_term true. "SOS"/"as needed" -> sos true. "x 5 days, then SOS" -> duration_days 5 and then_sos true.
+- A bill or pharmacy receipt is not a prescription: put its amounts in bills (one entry per receipt with its total) and leave medicines empty.
 - "Stop X" -> one medicine with action "stop". "Continue X" -> action "continue".
 - due_in_days counts from the document's own date: "after 8 weeks" = 56, "in 1 month" = 30, "after 12 weeks" = 84. "every 6 months" -> interval_months 6.
 - Every quote must be copied VERBATIM from the document (one line or part of a line). Never invent a medicine, dose, date, test or symptom; use null or leave the list empty.
@@ -1183,7 +1203,7 @@ const I18N = {
     s12T: 'Ask your documents', s12S: 'Answers come only from your papers, with the page cited.', askPh: 'Ask about your papers…', notIn: 'That is not in your papers. Add it to your visit questions?', adviceNo: 'That is a decision for the doctor. I have added it to your visit questions.',
     s13T: 'Visit prep', s13S: 'A one-page summary to show the doctor, and the questions to ask.', copy: 'Copy', download: 'Download', copied: 'Copied',
     s14T: 'Document vault', s14S: 'Every paper, kept in one place, labelled by type and date.', searchPh: 'Search: drug, test, doctor, bill…', all: 'All', sharePack: 'Share selected as one pack',
-    s15T: 'WhatsApp updates', s15S: 'What the family receives. V1 shows a preview; sending starts in V2.', openWa: 'Open in WhatsApp',
+    s15T: 'WhatsApp updates', s15S: 'What the family receives. Tap “Open in WhatsApp” on any message to send it yourself.', openWa: 'Open in WhatsApp',
     more: 'More', addPapers: 'Add more papers', startOver: 'Start over', emergency: 'Emergency: call 112',
     simple: 'Simple view', simpleOn: 'Simple view on', forWhat: 'For', looks: 'Looks like', matchStrip: 'Check it matches the strip', rulesT: 'How HomeBridge decides',
     s_NEW: 'New medicine', s_ACTIVE: 'Keep giving', s_CHANGED: 'Dose changed', s_STOPPED: 'Stop, don’t give', s_COMPLETE: 'Finished', s_ASK_DOCTOR: 'Ask doctor first', taken: 'taken today',
@@ -1211,7 +1231,7 @@ const I18N = {
     s12T: 'अपने कागज़ों से पूछें', s12S: 'जवाब सिर्फ आपके कागज़ों से, पेज के हवाले के साथ।', askPh: 'अपने कागज़ों के बारे में पूछें…', notIn: 'यह आपके कागज़ों में नहीं है। डॉक्टर से पूछने की सूची में जोड़ें?', adviceNo: 'यह डॉक्टर का फैसला है। मैंने इसे पूछने की सूची में जोड़ दिया है।',
     s13T: 'विज़िट की तैयारी', s13S: 'डॉक्टर को दिखाने के लिए एक पेज का सारांश और पूछने के सवाल।', copy: 'कॉपी', download: 'डाउनलोड', copied: 'कॉपी हुआ',
     s14T: 'कागज़ों की तिजोरी', s14S: 'हर कागज़ एक जगह, प्रकार और तारीख के साथ।', searchPh: 'खोजें: दवा, जांच, डॉक्टर, बिल…', all: 'सब', sharePack: 'चुने हुए एक साथ भेजें',
-    s15T: 'WhatsApp अपडेट', s15S: 'परिवार को क्या मिलेगा। V1 में झलक; भेजना V2 से।', openWa: 'WhatsApp में खोलें',
+    s15T: 'WhatsApp अपडेट', s15S: 'परिवार को क्या मिलेगा। किसी भी संदेश पर “WhatsApp में खोलें” दबाकर भेजें।', openWa: 'WhatsApp में खोलें',
     more: 'और', addPapers: 'और कागज़ जोड़ें', startOver: 'फिर से शुरू करें', emergency: 'इमरजेंसी: 112 पर कॉल करें',
     simple: 'आसान व्यू', simpleOn: 'आसान व्यू चालू', forWhat: 'किसलिए', looks: 'दिखने में', matchStrip: 'पत्ते से मिलाकर देखें', rulesT: 'HomeBridge कैसे तय करता है',
     s_NEW: 'नई दवा', s_ACTIVE: 'देते रहें', s_CHANGED: 'खुराक बदली', s_STOPPED: 'बंद करें, न दें', s_COMPLETE: 'पूरी हो गई', s_ASK_DOCTOR: 'पहले डॉक्टर से पूछें', taken: 'आज ली गईं',
@@ -1305,6 +1325,7 @@ function scrCondition() {
 function scrUpload() {
   const fresh = S.docs.filter((d) => !S.extractions[d.id]);
   return `<div class="screen fade"><div class="h1">${esc(t('s2T'))}</div><p class="sub">${esc(t('s2S'))}</p>
+    <label class="btn btn-p btn-block cam"><input type="file" id="file2" accept="image/*" capture="environment" hidden>📷 ${esc(L('Take a photo of a paper', 'कागज़ की फोटो खींचें'))}</label>
     <label class="drop"><input type="file" id="file" accept="image/*,application/pdf,.txt" multiple hidden><div style="font-size:30px">📄</div><b>${esc(t('choose'))}</b><span class="muted small">${esc(t('chooseB'))}</span></label>
     ${S.docs.length ? `<div class="files">${S.docs.map((d) => `<div class="fthumb">${d.thumb ? `<img src="${d.thumb}" alt="">` : '<div class="paper-mini"></div>'}<b>${esc(d.id)}</b><span>${esc(d.title)}</span>${S.extractions[d.id] ? '' : `<button class="x" data-a="rmdoc" data-id="${d.id}" aria-label="Remove">✕</button>`}</div>`).join('')}</div>` : ''}
     ${S.docs.length ? '' : `<button class="btn btn-soft btn-block" style="margin-top:12px" data-a="loadSample">${esc(t('useSample'))}</button>`}
@@ -1329,7 +1350,7 @@ function scrChecklist() {
   const toneOf = (s) => (s === 'FOUND' ? 't-found' : s === 'NOT_YET' ? 't-yet' : 't-miss');
   const lab = (s) => (s === 'FOUND' ? t('found') : s === 'NOT_YET' ? t('notYet') : t('notFound'));
   return `<div class="screen fade"><div class="h1">${esc(t('s4T'))}</div><p class="sub">${esc(t('s4S'))}</p>
-    ${S.golden ? `<div class="alert" style="background:var(--green-l);border-color:#BFE6CF">✅ <span>${esc(L(`Live AI matched the answer key on ${S.golden.match} of ${S.golden.total} medicine statuses.`, `लाइव AI ने ${S.golden.total} में से ${S.golden.match} दवाओं की स्थिति उत्तर-कुंजी जैसी बताई।`))}${S.golden.diffs.length ? ' ' + esc(S.golden.diffs.map((d) => `${d.name}: key ${d.key}, live ${d.live}`).join('; ')) : ''}</span></div>` : ''}
+    ${S.golden ? `<div class="alert" style="background:var(--green-l);border-color:#BFE6CF">✅ <span>${esc(L(`${S.golden.printed ? 'These are the printed sample papers. ' : ''}Live AI matched the answer key on ${S.golden.match} of ${S.golden.total} medicine statuses.`, `लाइव AI ने ${S.golden.total} में से ${S.golden.match} दवाओं की स्थिति उत्तर-कुंजी जैसी बताई।`))}${S.golden.diffs.length ? ' ' + esc(S.golden.diffs.map((d) => `${d.name}: key ${d.key}, live ${d.live}`).join('; ')) : ''}</span></div>` : ''}
     <div class="card"><div class="row"><b class="grow">${esc(L(j.name.en, j.name.hi))}</b><button class="btn btn-sm btn-s" data-a="go" data-to="condition">${esc(L('Change', 'बदलें'))}</button></div><div class="muted small">${esc(L(S.condition === 'auto' ? 'Detected from your discharge summary' : 'Chosen by you', S.condition === 'auto' ? 'डिस्चार्ज सारांश से पहचाना' : 'आपने चुना'))}</div></div>
     <div class="group-h">${esc(t('docsH'))}</div><div class="card">${g.docs.map((d) => `<div class="li"><span class="grow">${esc(d.en)}</span><span class="tag ${toneOf(d.status)}">${esc(lab(d.status))}</span></div>`).join('')}</div>
     <div class="group-h">${esc(t('itemsH'))}</div><div class="card">${g.items.map((it) => `<div class="li"><div class="grow">${esc(L(it.en, it.hi))}${it.status === 'NOT_FOUND' ? `<div class="row" style="margin-top:6px"><button class="btn btn-sm btn-soft" data-a="addq" data-q="${esc(it.q)}">${S.visitQs.includes(it.q) ? '✓ ' + esc(t('added')) : '+ ' + esc(t('addQ'))}</button></div>` : ''}</div><span class="tag ${toneOf(it.status)}">${esc(lab(it.status))}</span></div>`).join('')}</div>
@@ -1444,7 +1465,7 @@ function scrBox() {
       ${srcBtn(l.med.source.doc, l.med.source.quote)}</div>`;
   }).join('');
   return `<div class="screen fade"><div class="h1">${esc(t('s10T'))}</div><p class="sub">${esc(t('s10S'))}</p>
-    <div class="group-h">${esc(t('boxH'))}</div><div class="card">${S.home.map((h, i) => `<div class="li"><span class="em">💊</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(h.unit)}</span></span><span class="stepper"><button data-a="qty" data-i="${i}" data-d="-1">−</button><span>${esc(h.qty)}</span><button data-a="qty" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
+    <div class="group-h">${esc(t('boxH'))}</div><div class="card">${S.home.length ? '' : `<div class="muted small" style="margin-bottom:8px">${esc(L('Tell us what is already at home so you only buy what is missing.', 'घर पर क्या है बताएं, ताकि सिर्फ कमी वाली दवा खरीदें।'))}</div><button class="btn btn-sm btn-soft" data-a="sampleBox">${esc(L('Use the sample case’s medicine box (6 items)', 'सैंपल केस का दवा डिब्बा लें (6 चीज़ें)'))}</button>`}${S.home.map((h, i) => `<div class="li"><span class="em">💊</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(h.unit)}</span></span><span class="stepper"><button data-a="qty" data-i="${i}" data-d="-1">−</button><span>${esc(h.qty)}</span><button data-a="qty" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
       <div class="row" style="margin-top:8px"><input id="newmed" class="searchbox" style="margin:0" placeholder="${esc(L('Add a medicine, e.g. Dolo 650', 'दवा जोड़ें, जैसे Dolo 650'))}"><button class="btn btn-sm btn-soft" data-a="addmed">+</button></div></div>
     <div class="group-h">${esc(t('buyH'))}</div>${lines || `<div class="empty">${esc(L('Nothing to buy: the box has enough.', 'कुछ नहीं खरीदना: डिब्बे में काफी है।'))}</div>`}
     ${lines ? `<div class="card"><div class="total"><span>${esc(L('To pay', 'भुगतान'))}</span><span>₹${inr(total)}</span></div><div class="muted small">${esc(t('illus'))}</div></div>` : ''}
@@ -1550,13 +1571,41 @@ function waMessages() {
   const m4 = `📊 Weekly summary for the caregiver:\n• Medicines on track this week\n• ${ask} question(s) for the doctor\n• Next: ${P.timeline.filter((x) => x.due >= T_ISO).slice(0, 1).map((x) => `${x.name}, ${fmtDate(x.due)}`).join('')}`;
   return [m1, m2, m3, m4].filter(Boolean);
 }
+const WA = { ok: false, checked: false, to: '', busy: false, status: '', timer: null };
+async function waCheck() {
+  if (WA.checked || !/^https?:/.test(location.protocol)) return; WA.checked = true;
+  try { const r = await fetch('api/whatsapp'); if (r.ok) { const j = await r.json(); WA.ok = !!j.ok; WA.sandbox = j.sandbox; } } catch (e) { /* not hosted */ }
+  try { WA.to = localStorage.getItem('hb_wa_to') || ''; } catch (e) { /* storage blocked */ }
+  if (S.screen === 'whatsapp') render();
+}
+async function waSend(messages, label) {
+  const to = (document.getElementById('wato')?.value || WA.to).replace(/[^\d+]/g, '');
+  WA.to = to; try { localStorage.setItem('hb_wa_to', to); } catch (e) { /* ignore */ }
+  WA.busy = true; WA.status = L('Sending…', 'भेज रहे हैं…'); render();
+  try {
+    const r = await fetch('api/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to, messages }) });
+    const j = await r.json().catch(() => ({}));
+    WA.status = r.ok ? `✅ ${label || L(`Sent ${j.sent} message(s) to ${to}`, `${to} पर ${j.sent} संदेश भेजे`)}` : `⚠️ ${j.error || 'Could not send'}${j.hint ? ' ' + j.hint : ''}`;
+  } catch (e) { WA.status = '⚠️ ' + L('Could not reach the server.', 'सर्वर से जुड़ नहीं पाए।'); }
+  WA.busy = false; render();
+}
 function scrWhatsApp() {
+  waCheck();
   const ms = waMessages();
   const outIdx = 1;
-  return `<div class="screen fade"><div class="h1">${esc(t('s15T'))}</div><p class="sub">${esc(t('s15S'))}</p>
-    <div class="wa">${ms.map((m, i) => `${i === outIdx ? `<div class="msg out">📷 IMG_2041.jpg<div class="meta">${esc(L('You forwarded a new prescription', 'आपने नया पर्चा भेजा'))}</div></div>` : ''}<div class="msg">${esc(m)}<div class="meta">HomeBridge · ${['08:00', '11:42', '18:00', 'Sun 19:00'][i] || ''}</div></div>`).join('')}</div>
-    <a class="btn btn-wa btn-block" style="margin-top:12px" href="https://wa.me/?text=${encodeURIComponent(ms[0])}" target="_blank" rel="noreferrer">💬 ${esc(t('openWa'))}</a>
-    <p class="muted small" style="margin-top:10px">${esc(L('V2 sends these automatically through the WhatsApp Business API, and lets families forward new papers to the vault. V3 adds Hindi voice notes and call reminders.', 'V2 में ये अपने आप WhatsApp Business API से जाएंगे। V3 में हिंदी वॉइस नोट और कॉल रिमाइंडर।'))}</p>
+  const num = WA.to.replace(/[^\d]/g, '');
+  const waLink = (m) => `https://wa.me/${num}?text=${encodeURIComponent(m)}`;
+  const live = WA.ok ? `<div class="card wa-live"><h3>📲 ${esc(L('Send to a real WhatsApp', 'असली WhatsApp पर भेजें'))}</h3>
+      <div class="field"><label>${esc(L('Family member’s WhatsApp number', 'परिवार के सदस्य का WhatsApp नंबर'))}</label><input id="wato" type="tel" placeholder="+9198XXXXXXXX" value="${esc(WA.to)}"></div>
+      <div class="row wrap"><button class="btn btn-wa grow" data-a="waNow" ${WA.busy ? 'disabled' : ''}>💬 ${esc(L('Send these updates now', 'ये अपडेट अभी भेजें'))}</button><button class="btn btn-s grow" data-a="waLater" ${WA.busy || WA.timer ? 'disabled' : ''}>⏱️ ${esc(WA.timer ? L('Reminder set for 1 minute', '1 मिनट में रिमाइंडर') : L('Send the medicine reminder in 1 minute', '1 मिनट में दवा रिमाइंडर'))}</button></div>
+      ${WA.status ? `<div class="muted small" style="margin-top:8px">${esc(WA.status)}</div>` : ''}
+      ${WA.sandbox ? `<div class="muted small" style="margin-top:6px">${esc(L('Demo uses the Twilio WhatsApp sandbox: the phone must first send the join code to the sandbox number.', 'डेमो Twilio sandbox से: फोन से पहले join कोड भेजें।'))}</div>` : ''}</div>`
+    : `<div class="field" style="margin-top:12px"><label>${esc(L('WhatsApp number (optional)', 'WhatsApp नंबर (वैकल्पिक)'))}</label><input id="wato" type="tel" data-in="wato" placeholder="+9198XXXXXXXX" value="${esc(WA.to)}"></div>`;
+  return `<div class="screen fade"><div class="h1">${esc(t('s15T'))}</div><p class="sub">${esc(WA.ok ? L('What the family receives. Sending works for real from this link.', 'परिवार को क्या मिलेगा। इस लिंक से सच में भेजा जा सकता है।') : t('s15S'))}</p>
+    <div class="wa">${ms.map((m, i) => `${i === outIdx ? `<div class="msg out">📷 IMG_2041.jpg<div class="meta">${esc(L('You forwarded a new prescription', 'आपने नया पर्चा भेजा'))}</div></div>` : ''}<div class="msg">${esc(m)}<div class="meta">HomeBridge · ${['08:00', '11:42', '18:00', 'Sun 19:00'][i] || ''} · <a href="${waLink(m)}" target="_blank" rel="noreferrer">${esc(t('openWa'))}</a></div></div>`).join('')}</div>
+    ${live}
+    ${WA.ok ? '' : `<a class="btn btn-wa btn-block" style="margin-top:12px" href="${waLink(ms[0])}" target="_blank" rel="noreferrer">💬 ${esc(t('openWa'))}</a>`}
+    <p class="muted small" style="margin-top:10px">${esc(L('Production: the WhatsApp Business API sends approved reminder templates on schedule, and families can forward new papers to the vault. V3 adds Hindi voice notes and call reminders.', 'असली ऐप में WhatsApp Business API से तय समय पर रिमाइंडर जाएंगे। V3 में हिंदी वॉइस नोट और कॉल रिमाइंडर।'))}</p>
   </div>`;
 }
 
@@ -1565,7 +1614,7 @@ function sheetHtml() {
   if (!S.sheet) return '';
   if (S.sheet.kind === 'more') {
     const items = [['reminders', '⏰', t('s11T')], ['prep', '🩺', t('s13T')], ['whatsapp', '💬', t('s15T')], ['checklist', '📋', t('s4T')], ['upload', '➕', t('addPapers')], ['rules', '⚖️', t('rulesT')]];
-    return `<div class="sheet-bg" data-a="close"><div class="sheet" data-stop><div class="grab"></div>${items.map(([to, ic, label]) => `<button class="opt" data-a="go" data-to="${to}"><span class="ic">${ic}</span><b>${esc(label)}</b></button>`).join('')}<button class="opt" data-a="restart"><span class="ic">↺</span><b>${esc(t('startOver'))}</b></button></div></div>`;
+    return `<div class="sheet-bg" data-a="close"><div class="sheet" data-stop><div class="grab"></div>${items.map(([to, ic, label]) => `<button class="opt" data-a="go" data-to="${to}"><span class="ic">${ic}</span><b>${esc(label)}</b></button>`).join('')}${/^https?:/.test(location.protocol) ? `<a class="opt" href="papers.html${DEMO_DATE ? '?today=' + DEMO_DATE : ''}" target="_blank" rel="noreferrer"><span class="ic">🖨️</span><b>${esc(L('Print the sample papers', 'सैंपल कागज़ प्रिंट करें'))}</b></a>` : ''}<button class="opt" data-a="restart"><span class="ic">↺</span><b>${esc(t('startOver'))}</b></button></div></div>`;
   }
   if (S.sheet.kind === 'doc') {
     const d = docOf(S.sheet.doc); if (!d) return '';
@@ -1594,7 +1643,7 @@ function render() {
   const hasNav = !!S.plan && !['landing', 'condition', 'reading'].includes(S.screen);
   const inner = SCREENS[S.screen]();
   app.className = 'app' + (hasNav ? ' with-nav' : '') + (S.simple ? ' simple' : '');
-  app.innerHTML = `<header class="top"><button class="brand" data-a="home"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#FF6F61"/><path d="M8 26c4-9 20-9 24 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M13 26v-4.5M20 26v-6.5M27 26v-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 28.5h28" stroke="#FFD3CD" stroke-width="2.4" stroke-linecap="round"/></svg><span><b>HomeBridge</b><small>${esc(t('tag'))}</small></span></button><button class="pill-btn ${S.simple ? 'on' : ''}" data-a="simple" title="${esc(t('simple'))}">👓 ${esc(S.lang === 'hi' ? 'आसान' : 'Simple')}</button><button class="pill-btn" data-a="lang">${esc(t('lang'))}</button></header>
+  app.innerHTML = `<header class="top"><button class="brand" data-a="home"><svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#FF6F61"/><path d="M8 26c4-9 20-9 24 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M13 26v-4.5M20 26v-6.5M27 26v-4.5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 28.5h28" stroke="#FFD3CD" stroke-width="2.4" stroke-linecap="round"/></svg><span><b>HomeBridge</b><small>${esc(t('tag'))}</small></span></button>${DEMO_DATE ? `<span class="pill-btn dchip" title="Demo date pinned with ?today=">📅 ${Number(T_ISO.slice(8))} ${MONTHS[Number(T_ISO.slice(5, 7)) - 1]}</span>` : ''}<button class="pill-btn ${S.simple ? 'on' : ''}" data-a="simple" title="${esc(t('simple'))}">👓 ${esc(S.lang === 'hi' ? 'आसान' : 'Simple')}</button><button class="pill-btn" data-a="lang">${esc(t('lang'))}</button></header>
     ${S.screen === 'plan' ? renderTabs() : ''}
     <main class="scroll">${inner.split('</div><div class="dock">')[0]}${inner.includes('</div><div class="dock">') ? '</div>' : ''}</main>
     ${inner.includes('</div><div class="dock">') ? '<div class="dock">' + inner.split('</div><div class="dock">')[1] : ''}
@@ -1608,6 +1657,7 @@ function render() {
   lastScreen = S.screen;
   const rail = document.getElementById('rail'); if (rail) rail.innerHTML = renderRail();
   const fi = document.getElementById('file'); if (fi) fi.onchange = (e) => addFiles([...e.target.files]);
+  const fc = document.getElementById('file2'); if (fc) fc.onchange = (e) => addFiles([...e.target.files]);
 }
 function go(to) { S.sheet = null; if (to === 'plan' && !S.plan) to = 'landing'; S.screen = to; render(); const ns = document.querySelector('.scroll'); if (ns && to !== 'ask') ns.scrollTop = 0; }
 function toast(msg) { S.toast = msg; render(); setTimeout(() => { S.toast = null; render(); }, 2600); }
@@ -1692,10 +1742,15 @@ async function runProcessing() {
   advance(4); await new Promise((r) => setTimeout(r, 400));
   const condition = S.condition === 'auto' ? null : S.condition;
   S.plan = buildPlan(S.docs, S.extractions, S.home, condition);
-  if (S.docs.every((d) => d.sample) && Object.values(S.sourceOf).includes('live')) {
+  const usedLive = Object.values(S.sourceOf).includes('live');
+  if (S.docs.every((d) => d.sample) && usedLive) {
     S.keyPlan = buildPlan(S.docs, CACHED_EXTRACTIONS, S.home, condition);
     S.golden = compareWithKey(S.plan, S.keyPlan);
-  }
+  } else if (usedLive && Object.values(S.extractions).some((x) => /NRCI-DEMO-2041/i.test(x?.patient?.reg_no || ''))) {
+    // The family photographed the printed sample papers: check the live reading against the hand-made answer key
+    S.keyPlan = buildPlan(SAMPLE_DOCS.map((d) => ({ ...d, sample: true })), CACHED_EXTRACTIONS, S.home, condition);
+    S.golden = compareWithKey(S.plan, S.keyPlan); S.golden.printed = true;
+  } else S.golden = null;
   S.index = buildIndex(S.docs);
   if (!S.dates.discharge) { const ds = S.docs.find((d) => (S.extractions[d.id]?.doc_type) === 'discharge_summary'); if (ds) S.dates.discharge = ds.date; }
   advance(5); S.proc.finished = true; clearInterval(timer);
@@ -1742,6 +1797,9 @@ const ACTIONS = {
   restart: () => { Object.assign(S, { screen: 'landing', docs: [], extractions: {}, sourceOf: {}, plan: null, keyPlan: null, golden: null, home: [], tab: 'today', pick: {}, ticks: {}, exTicks: {}, chat: [], visitQs: [], sheet: null, proc: null, condition: 'auto', dates: { discharge: '', treatEnd: '' }, vaultSel: {}, vaultQ: '' }); upCount = 0; render(); },
   addq: (el) => { const q = el.dataset.q; if (!S.visitQs.includes(q)) S.visitQs.push(q); toast(L('Added to visit questions', 'पूछने की सूची में जोड़ा')); },
   qty: (el) => { const h = S.home[Number(el.dataset.i)]; const step = h.unit === 'tablets' || h.unit === 'capsules' ? 1 : 0.5; h.qty = Math.max(0, Math.round((h.qty + step * Number(el.dataset.d)) * 10) / 10); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
+  waNow: () => waSend(waMessages()),
+  waLater: () => { const m = waMessages()[0]; const to = document.getElementById('wato')?.value; if (to) WA.to = to; WA.status = L('Reminder scheduled for 1 minute from now. Carry on with the demo.', '1 मिनट बाद रिमाइंडर जाएगा।'); WA.timer = setTimeout(() => { WA.timer = null; waSend([m], L('Medicine reminder sent', 'दवा रिमाइंडर भेजा')); }, 60000); render(); },
+  sampleBox: () => { S.home = SAMPLE_HOME.map((h) => ({ ...h })); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
   addmed: () => { const v = document.getElementById('newmed').value.trim(); if (!v) return; S.home.push({ name: v, salt: normaliseSalt(v).salt, qty: 10, unit: 'tablets' }); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
   pick: (el) => { S.pick[el.dataset.k] = Number(el.dataset.i); render(); },
   order: (el) => { S.sheet = { kind: 'order', id: 100000 + Math.floor(Math.random() * 899999), total: Number(el.dataset.total) }; render(); },
@@ -1767,6 +1825,7 @@ document.addEventListener('change', (e) => {
   const k = e.target.dataset.in; if (!k) return;
   if (k === 'dDis') S.dates.discharge = e.target.value; else if (k === 'dEnd') S.dates.treatEnd = e.target.value;
   else if (k === 'useLive') S.useLive = e.target.checked;
+  else if (k === 'wato') WA.to = e.target.value;
   else if (k === 'rPat') S.reminderFor.patient = e.target.checked; else if (k === 'rCare') S.reminderFor.caregiver = e.target.checked;
   else if (k === 'vsel') S.vaultSel[e.target.dataset.id] = e.target.checked;
   if (k !== 'vsel') render();

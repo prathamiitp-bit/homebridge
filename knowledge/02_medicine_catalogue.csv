@@ -1,0 +1,14 @@
+salt,strength,product,pack,units_per_pack,days_per_pack,price_1mg_online_inr,price_jan_aushadhi_inr,price_local_chemist_inr
+Pilocarpine,5 mg,Pilocarpine 5 (Brand A),10 tablets,10,,210,,230
+Pilocarpine,5 mg,Pilocarpine 5 (Generic),10 tablets,10,,95,60,110
+Benzydamine,0.15%,Benzydamine 0.15% (Brand B),300 ml,,6,185,,195
+Benzydamine,0.15%,Benzydamine 0.15% (Generic),300 ml,,6,90,55,100
+Pantoprazole,40 mg,Pantoprazole 40 (Generic),15 tablets,15,,40,15,45
+Paracetamol,650 mg,Paracetamol 650 (Brand C),15 tablets,15,,34,,35
+Paracetamol,650 mg,Paracetamol 650 (Generic),15 tablets,15,,22,12,25
+Sodium fluoride,1.1%,Sodium fluoride 1.1% gel,50 g,,30,160,,170
+Lignocaine,2%,Lignocaine 2% viscous,100 ml,,20,75,,80
+Whey protein,2 scoops,Protein supplement,400 g,,10,650,,700
+Fluconazole,150 mg,Fluconazole 150 (Generic),1 tablet,1,,12,6,15
+Amoxicillin + Clavulanic acid,625 mg,Amoxicillin-Clavulanate 625 (Generic),6 tablets,6,,95,48,110
+Chlorhexidine,0.2%,Chlorhexidine 0.2% mouthwash,150 ml,,5,80,,85
