@@ -229,6 +229,45 @@ table.t th{font-size:12px;color:var(--ink3);font-weight:600;border-top:0}
 a.opt { text-decoration: none; color: inherit; }
 .pill-btn.dchip { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
 @media (max-width: 440px) { .top .brand small { display: none; } .top .pill-btn { padding: 6px 9px; font-size: 12px; } .top { gap: 6px; } }
+/* ---------- Buy medicines flow ---------- */
+.bsteps{display:flex;gap:4px;margin:6px 0 12px;overflow-x:auto;scrollbar-width:none}
+.bstep{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;font:inherit;font-size:11px;color:var(--ink3);padding:2px 0;cursor:pointer;white-space:nowrap}
+.bstep span{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:#fff;border:1.5px solid var(--line)}
+.bstep.on{color:var(--ink);font-weight:600}.bstep.on span{background:var(--coral);border-color:var(--coral);color:#fff}
+.bstep.done span{background:var(--green-l);border-color:#BFE6CF;color:var(--green)}
+.bstep:disabled{cursor:default;opacity:.6}
+.bitem{display:flex;gap:12px;align-items:flex-start}
+.bitem .grow{min-width:0}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--coral-l);border-color:var(--coral);color:var(--coral-d);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{border:0;background:none;font:inherit;font-size:12.5px;padding:6px 11px;cursor:pointer;color:var(--ink)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:#fff}
+.x2{border:0;background:none;color:var(--ink3);font-size:14px;cursor:pointer;padding:2px 4px}
+.switch{display:flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.hint{background:var(--amber-l);border-color:#F2DDB0;font-size:13.5px;margin-top:10px}
+.pcard{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:8px;font:inherit;cursor:pointer;color:var(--ink)}
+.pcard.on{border-color:var(--coral);background:var(--coral-l)}
+.pcard .radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;margin-right:10px}
+.pcard.on .radio{border-color:var(--coral);box-shadow:inset 0 0 0 4px #fff;background:var(--coral)}
+.ptotal{font-size:17px}
+.ptable{padding:4px 0}
+.prow{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
+.prow+.prow{border-top:1px solid var(--line)}
+.prow.on{background:var(--coral-l)}
+.prow:not([data-a]){cursor:default;opacity:.75}
+.pdot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block;margin-right:6px}
+.miss{color:var(--amber)}
+.placed{text-align:center;padding:10px 0 14px}
+.track{list-style:none;margin:0;padding:0}
+.track li{position:relative;padding:0 0 12px 26px;font-size:13.5px;color:var(--ink3)}
+.track li span{position:absolute;left:4px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--line);background:#fff}
+.track li:not(:last-child)::after{content:'';position:absolute;left:9px;top:17px;bottom:0;width:2px;background:var(--line)}
+.track li.done{color:var(--ink)}.track li.done span{background:var(--green);border-color:var(--green)}
+.track li.done::after{background:var(--green)!important}
+.track li.on{color:var(--ink);font-weight:600}.track li.on span{border-color:var(--coral);background:var(--coral);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,111,97,.5)}50%{box-shadow:0 0 0 6px rgba(255,111,97,0)}}
 
 </style>
 </head>
@@ -945,6 +984,97 @@ function buildCart(plan, home, horizon = 30) {
   return { lines, sos, removeFromBox, onHold, horizon };
 }
 
+// ---------- Medicine bundle: quantities, platforms and the cheapest way to buy ----------
+// PRICES, FEES, STOCK AND DELIVERY TIMES ARE ILLUSTRATIVE. In production they come from partner APIs.
+const PLATFORMS = [
+  { id: '1mg', name: 'Tata 1mg', short: '1mg', color: '#FF6F61', disc: [0.14, 0.24], fee: (s) => (s >= 499 ? 0 : 49), eta: 'Tomorrow by 9 pm', perk: 'Pharmacist checks every item against your prescription' },
+  { id: 'pharmeasy', name: 'PharmEasy', short: 'PharmEasy', color: '#10847E', disc: [0.09, 0.25], fee: (s) => (s >= 699 ? 0 : 59), eta: 'In 2 days', perk: '' },
+  { id: 'apollo', name: 'Apollo 24|7', short: 'Apollo', color: '#0E5BA8', disc: [0.06, 0.16], fee: (s) => (s >= 500 ? 0 : 40), eta: 'Today, within 4 hours', perk: 'Express delivery' },
+  { id: 'netmeds', name: 'Netmeds', short: 'Netmeds', color: '#24AEB1', disc: [0.10, 0.22], fee: (s) => (s >= 499 ? 0 : 49), eta: 'In 2–3 days', perk: '' },
+  { id: 'truemeds', name: 'Truemeds', short: 'Truemeds', color: '#2E6BE6', disc: [0.08, 0.14], gdisc: [0.32, 0.52], fee: (s) => (s >= 500 ? 0 : 49), eta: 'In 3 days', perk: 'Generic substitutes' },
+  { id: 'jan', name: 'Jan Aushadhi Kendra', short: 'Jan Aushadhi', color: '#1E7B34', pickup: true, fee: () => 0, eta: 'Pick up today', perk: 'Government generic store' },
+  { id: 'local', name: 'Local chemist', short: 'Chemist', color: '#7A5AF8', pickup: true, fee: () => 0, eta: 'Pick up now', perk: 'Walk-in, MRP minus a small discount' },
+];
+function hashFrac(s) { let x = 2166136261; for (const ch of s) { x ^= ch.charCodeAt(0); x = Math.imul(x, 16777619) >>> 0; } return (x % 10000) / 10000; }
+const isGeneric = (c) => /generic/i.test(c.product);
+function platformPrice(p, c) {
+  if (p.id === 'jan') return c.jan ?? null;
+  const mrp = c.local;
+  if (p.id === 'local') return Math.round(mrp * 0.95);
+  if (hashFrac(`${p.id}|${c.product}|stock`) < 0.1) return null; // out of stock
+  const [a, b] = (p.gdisc && isGeneric(c)) ? p.gdisc : p.disc;
+  return Math.round(mrp * (1 - (a + (b - a) * hashFrac(`${p.id}|${c.product}`))));
+}
+function packsFor(c, perDay, days, have) {
+  if (c.per_pack != null) { const need = Math.max(0, Math.ceil((perDay || 1) * days) - (have || 0)); return { packs: Math.ceil(need / c.per_pack), units: need, unit: 'tablets' }; }
+  return { packs: Math.max(0, Math.ceil(days / c.days_per_pack - (have || 0) - 1e-9)), units: null, unit: 'packs' };
+}
+// One line per medicine the papers say to take now. Edits (days, packs, variant, include) come from `ed`.
+function bundleItems(plan, home, ed = {}) {
+  const items = [];
+  for (const m of plan.meds) {
+    if (!['ACTIVE', 'NEW', 'CHANGED'].includes(m.status)) continue;
+    const e = ed[m.key] || {};
+    const variants = catalogueOptions(m.salt, m.strength);
+    const perDay = unitsPerDay(m.dose_pattern);
+    const left = m.long_term || !m.duration_days ? 30 : Math.max(0, m.daysLeft ?? 30);
+    const days = e.days ?? Math.min(30, left || 30);
+    const homeItem = home.find((h) => saltKey(normaliseSalt(h.name, h.salt).salt) === m.key);
+    const have = homeItem ? Number(homeItem.qty) || 0 : 0;
+    const include = e.include ?? (!m.sos && variants.length > 0);
+    items.push({ key: m.key, med: m, variants, perDay, days, left, have, homeItem, include, variant: e.variant || 'cheapest', packsOverride: e.packs, sos: !!m.sos, extra: false });
+  }
+  for (const [k, e] of Object.entries(ed)) if (e.extra && !items.some((i) => i.key === k)) {
+    const variants = CATALOGUE.filter((c) => saltKey(c.salt) === k);
+    items.push({ key: k, med: { name: variants[0]?.salt || k, key: k, source: { doc: '', quote: '' } }, variants, perDay: 1, days: e.days ?? 30, have: 0, include: e.include ?? true, variant: e.variant || 'cheapest', packsOverride: e.packs ?? 1, extra: true });
+  }
+  return items;
+}
+// Cheapest offer for one item on one platform, honouring the brand/generic choice
+function offerOn(p, it) {
+  let best = null;
+  for (const c of it.variants) {
+    if (it.variant === 'generic' && !isGeneric(c)) continue;
+    if (it.variant === 'brand' && isGeneric(c) && it.variants.some((v) => !isGeneric(v))) continue;
+    const price = platformPrice(p, c); if (price == null) continue;
+    const q = packsFor(c, it.perDay, it.days, it.have);
+    const packs = it.packsOverride ?? (it.sos ? (it.have ? 0 : 1) : q.packs);
+    if (!packs) return { product: c, price, packs: 0, total: 0 };
+    const total = price * packs;
+    if (!best || total < best.total) best = { product: c, price, packs, total, units: q.units };
+  }
+  return best;
+}
+// Every platform on its own, plus the best split across up to 3 platforms
+function compareBundle(items) {
+  const lines = items.filter((i) => i.include);
+  const perPlatform = PLATFORMS.map((p) => {
+    const offers = lines.map((it) => ({ it, o: offerOn(p, it) }));
+    const have = offers.filter((x) => x.o && x.o.packs > 0), missing = offers.filter((x) => !x.o).map((x) => x.it);
+    const sub = have.reduce((s, x) => s + x.o.total, 0);
+    const fee = sub ? p.fee(sub) : 0;
+    return { p, offers, sub, fee, total: sub + fee, missing, complete: !missing.length };
+  });
+  const need = lines.filter((it) => PLATFORMS.some((p) => (offerOn(p, it)?.packs ?? 0) > 0));
+  let best = null, tried = 0;
+  for (let mask = 1; mask < (1 << PLATFORMS.length); mask++) {
+    const ps = PLATFORMS.filter((_, i) => mask & (1 << i)); if (ps.length > 3) continue;
+    tried++;
+    const pick = []; let ok = true;
+    for (const it of need) {
+      let b = null; for (const p of ps) { const o = offerOn(p, it); if (o && o.packs && (!b || o.total < b.o.total)) b = { p, o }; }
+      if (!b) { ok = false; break; } pick.push({ it, ...b });
+    }
+    if (!ok) continue;
+    const groups = ps.map((p) => { const its = pick.filter((x) => x.p === p); const sub = its.reduce((s, x) => s + x.o.total, 0); return { p, its, sub, fee: its.length ? p.fee(sub) : 0 }; }).filter((g) => g.its.length);
+    const total = groups.reduce((s, g) => s + g.sub + g.fee, 0);
+    if (!best || total < best.total || (total === best.total && groups.length < best.groups.length)) best = { groups, total };
+  }
+  const mrp = lines.reduce((s, it) => { const brand = it.variants.find((v) => !isGeneric(v)) || it.variants[0]; if (!brand) return s; const q = packsFor(brand, it.perDay, it.days, it.have); const packs = it.packsOverride ?? (it.sos ? (it.have ? 0 : 1) : q.packs); return s + brand.local * packs; }, 0);
+  const complete = perPlatform.filter((x) => x.complete && x.sub).sort((a, b) => a.total - b.total);
+  return { perPlatform: perPlatform.sort((a, b) => (b.complete - a.complete) || (a.total - b.total)), bestSingle: complete[0] || null, split: best, tried, mrp };
+}
+
 // ---------- Today and reminders ----------
 const SLOTS = ['morning', 'afternoon', 'night'];
 function buildToday(plan) {
@@ -1478,30 +1608,123 @@ function scrPlan() {
   return `<div class="screen fade" style="padding-top:12px"><div class="row" style="margin-bottom:10px"><div class="grow"><b>${esc(p.name || L('Patient', 'मरीज़'))}</b><div class="muted small">${esc(L(JOURNEYS[S.plan.condition].name.en, JOURNEYS[S.plan.condition].name.hi))}</div></div>${Object.values(S.sourceOf).includes('live') ? `<span class="tag t-live">● ${esc(t('liveOn'))}</span>` : ''}</div>${body}</div>`;
 }
 
-// ---------- S10: medicine box and cart ----------
-function scrBox() {
-  const cart = buildCart(S.plan, S.home);
-  let total = 0;
-  const lines = cart.lines.map((l, li) => {
-    if (l.note) return `<div class="cart-line"><b>${esc(l.med.name)}</b><div class="note unclear">${esc(L(l.note === 'dose_missing' ? 'Dose not clear on the paper. A pharmacist will confirm.' : 'Not in the demo catalogue.', 'पर्चे में खुराक साफ नहीं। फार्मासिस्ट पुष्टि करेगा।'))}</div></div>`;
-    const pickKey = l.med.key; const chosen = S.pick[pickKey] ?? 0; const o = l.offers[chosen] || l.offers[0]; total += o.total;
-    const chName = { online: '1mg online', jan: 'Jan Aushadhi', local: L('Local chemist', 'पास का केमिस्ट') };
-    return `<div class="cart-line"><div class="row"><b class="grow">${esc(l.med.name)}</b>${statusTag(l.med.status)}</div>
-      <div class="muted small">${l.tablet ? esc(L(`Need ${l.needUnits} for ${l.days} days, ${l.haveUnits} at home`, `${l.days} दिन के लिए ${l.needUnits} चाहिए, घर पर ${l.haveUnits}`)) : esc(L(`Covers ${l.days} days, ${l.haveUnits} pack at home`, `${l.days} दिन के लिए, घर पर ${l.haveUnits}`))} → <b>${l.packs} × ${esc(l.offers[0].pack)}</b></div>
-      ${l.flag ? `<div class="note unclear">${esc(L('Duration not on the paper; 30 days assumed. Confirm with the doctor.', 'अवधि नहीं लिखी; 30 दिन माने गए। डॉक्टर से पुष्टि करें।'))}</div>` : ''}
-      ${l.offers.slice(0, 4).map((x, i) => `<button class="offer ${i === chosen ? 'on' : ''}" data-a="pick" data-k="${pickKey}" data-i="${i}"><span class="ch">${esc(chName[x.channel])}</span><span class="grow">${esc(x.product)}</span>${i === 0 ? `<span class="best">${esc(L('Cheapest', 'सबसे सस्ता'))}</span>` : ''}<b>₹${inr(x.total)}</b></button>`).join('')}
-      ${srcBtn(l.med.source.doc, l.med.source.quote)}</div>`;
-  }).join('');
-  return `<div class="screen fade"><div class="h1">${esc(t('s10T'))}</div><p class="sub">${esc(t('s10S'))}</p>
-    <div class="group-h">${esc(t('boxH'))}</div><div class="card">${S.home.length ? '' : `<div class="muted small" style="margin-bottom:8px">${esc(L('Tell us what is already at home so you only buy what is missing.', 'घर पर क्या है बताएं, ताकि सिर्फ कमी वाली दवा खरीदें।'))}</div><button class="btn btn-sm btn-soft" data-a="sampleBox">${esc(L('Quick-fill the medicine box (6 items)', 'दवा का डिब्बा जल्दी भरें (6 चीज़ें)'))}</button>`}${S.home.map((h, i) => `<div class="li"><span class="em">💊</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(h.unit)}</span></span><span class="stepper"><button data-a="qty" data-i="${i}" data-d="-1">−</button><span>${esc(h.qty)}</span><button data-a="qty" data-i="${i}" data-d="1">+</button></span></div>`).join('')}
-      <div class="row" style="margin-top:8px"><input id="newmed" class="searchbox" style="margin:0" placeholder="${esc(L('Add a medicine, e.g. Dolo 650', 'दवा जोड़ें, जैसे Dolo 650'))}"><button class="btn btn-sm btn-soft" data-a="addmed">+</button></div></div>
-    <div class="group-h">${esc(t('buyH'))}</div>${lines || `<div class="empty">${esc(L('Nothing to buy: the box has enough.', 'कुछ नहीं खरीदना: डिब्बे में काफी है।'))}</div>`}
-    ${lines ? `<div class="card"><div class="total"><span>${esc(L('To pay', 'भुगतान'))}</span><span>₹${inr(total)}</span></div><div class="muted small">${esc(t('illus'))}</div></div>` : ''}
-    ${cart.sos.length ? `<div class="group-h">${esc(t('sosH'))}</div><div class="card">${cart.sos.map((x) => `<div class="li"><span class="grow">${esc(x.med.name)}</span><span class="muted small">${x.have ? esc(t('atHome')) + ': ' + esc(x.have.qty) + ' ' + esc(x.have.unit) : esc(L('none at home', 'घर पर नहीं'))}</span></div>`).join('')}</div>` : ''}
-    ${cart.removeFromBox.length ? `<div class="group-h">${esc(t('removeH'))}</div><div class="card" style="border-color:#F6C9C3">${cart.removeFromBox.map((h) => `<div class="li"><span class="em">🚫</span><span class="grow">${esc(h.name)}</span></div>`).join('')}</div>` : ''}
-    ${cart.onHold.length ? `<div class="group-h">${esc(t('holdH'))}</div><div class="card">${cart.onHold.map((m) => `<div class="li"><span class="em">❓</span><span class="grow">${esc(m.name)}</span><button class="btn btn-sm btn-soft" data-a="addq" data-q="${esc(`Should ${m.name} continue? It is at home but not on any of the papers.`)}">${esc(t('addQ'))}</button></div>`).join('')}</div>` : ''}
-  </div>${lines ? `<div class="dock"><button class="btn btn-p btn-block" data-a="order" data-total="${total}">${esc(t('order'))} · ₹${inr(total)}</button></div>` : ''}`;
+// ---------- S10: Buy medicines — prescription → at home → bundle → compare → checkout → track ----------
+const BUY_STEPS = [['rx', 'Prescription', 'पर्चा'], ['home', 'At home', 'घर पर'], ['bundle', 'Bundle', 'बंडल'], ['compare', 'Compare', 'तुलना'], ['checkout', 'Checkout', 'ऑर्डर']];
+function buyState() { if (!S.buy) S.buy = { step: 'rx', ed: {}, choice: null, order: null, pay: 'upi', addr: 'Flat 12, Shanti Nagar, Ambala Cantt, Haryana 133001', name: S.plan?.patient?.name || '' }; return S.buy; }
+const qtyLabel = (n, unit) => `${Number.isInteger(n) ? n : n.toFixed(1)} ${n === 1 ? unit.replace(/s$/, '') : unit}`;
+function buyHead(step) {
+  const i = BUY_STEPS.findIndex((x) => x[0] === step);
+  return `<div class="bsteps">${BUY_STEPS.map(([k, en, hi], j) => `<button class="bstep ${j < i ? 'done' : ''} ${j === i ? 'on' : ''}" data-a="bstep" data-k="${k}" ${j > i ? 'disabled' : ''}><span>${j < i ? '✓' : j + 1}</span>${esc(L(en, hi))}</button>`).join('')}</div>`;
 }
+function itemNeedText(it) {
+  const c = it.variants[0]; if (!c) return L('Not in the catalogue yet', 'कैटलॉग में नहीं');
+  if (it.sos) return L('Only when needed (SOS)', 'ज़रूरत पड़ने पर (SOS)');
+  if (c.per_pack != null && it.perDay) return L(`${it.med.dose_pattern} · ${it.perDay}/day × ${it.days} days = ${Math.ceil(it.perDay * it.days)} tablets`, `${it.med.dose_pattern} · रोज़ ${it.perDay} × ${it.days} दिन = ${Math.ceil(it.perDay * it.days)} गोली`);
+  return L(`${it.med.dose_pattern || ''} · ${it.days} days · 1 pack lasts about ${c.days_per_pack} days`, `${it.days} दिन · 1 पैक लगभग ${c.days_per_pack} दिन`);
+}
+function scrBox() {
+  const B = buyState();
+  if (B.order) return scrOrderPlaced();
+  const items = bundleItems(S.plan, S.home, B.ed);
+  const head = `<div class="h1">${esc(L('Buy medicines', 'दवाएं खरीदें'))}</div>${buyHead(B.step)}`;
+  const nav = (back, next, label, extra = '') => `<div class="dock">${back ? `<button class="btn btn-s" data-a="bstep" data-k="${back}">${esc(t('back'))}</button>` : ''}<button class="btn btn-p grow" data-a="bstep" data-k="${next}" ${extra}>${esc(label)}</button></div>`;
+
+  if (B.step === 'rx') {
+    const need = items.filter((i) => !i.extra && !i.sos), sos = items.filter((i) => i.sos);
+    const notNeeded = S.plan.meds.filter((m) => ['STOPPED', 'COMPLETE'].includes(m.status));
+    const ask = S.plan.meds.filter((m) => m.status === 'ASK_DOCTOR');
+    return `<div class="screen fade">${head}<p class="sub">${esc(L('From your latest papers: what to take, how much, and for how long.', 'आपके नए कागज़ों से: क्या लेना है, कितना और कितने दिन।'))}</p>
+      <div class="group-h">${esc(L('To take now', 'अभी लेनी हैं'))} · ${need.length}</div>
+      ${need.map((it) => `<div class="card bitem">${pillSvg(medInfo(it.med)?.look, 34)}<div class="grow"><div class="row"><b class="grow">${esc(it.med.name)}</b>${statusTag(it.med.status)}</div>${medInfo(it.med) ? `<div class="muted small">${esc(L(medInfo(it.med).purpose.en, medInfo(it.med).purpose.hi))}</div>` : ''}<div class="small" style="margin-top:4px">${esc(itemNeedText(it))}</div><div class="muted small">${esc(it.med.long_term || !it.med.duration_days ? L('Ongoing: we plan 30 days at a time', 'लगातार: 30-30 दिन की योजना') : L(`${it.left} days left on this course`, `इस कोर्स के ${it.left} दिन बचे`))}</div>${srcBtn(it.med.source.doc, it.med.source.quote)}</div></div>`).join('')}
+      ${sos.length ? `<div class="group-h">${esc(L('Only when needed', 'ज़रूरत पड़ने पर'))}</div>${sos.map((it) => `<div class="card bitem">${pillSvg(medInfo(it.med)?.look, 34)}<div class="grow"><b>${esc(it.med.name)}</b><div class="muted small">${esc(itemNeedText(it))}</div></div><label class="switch"><input type="checkbox" data-in="binc" data-k="${esc(it.key)}" ${it.include ? 'checked' : ''}><span>${esc(L('Keep 1 pack', '1 पैक रखें'))}</span></label></div>`).join('')}` : ''}
+      ${notNeeded.length ? `<div class="group-h">${esc(L('Not buying', 'नहीं खरीदनी'))}</div><div class="card">${notNeeded.map((m) => `<div class="li muted"><span class="grow"><s>${esc(m.name)}</s></span><span class="small">${esc(m.status === 'STOPPED' ? L('Stopped by the doctor', 'डॉक्टर ने बंद की') : L('Course finished', 'कोर्स पूरा'))} [${esc(m.source.doc)}]</span></div>`).join('')}</div>` : ''}
+      ${ask.length ? `<div class="banner" style="margin-top:10px">❓ <span>${esc(L(`${ask.map((m) => m.name).join(', ')} is at home but on no paper. Not added; ask the doctor first.`, `${ask.map((m) => m.name).join(', ')} घर पर है पर किसी कागज़ में नहीं। पहले डॉक्टर से पूछें।`))}</span></div>` : ''}
+    </div>${nav(null, 'home', L('Next: what is at home?', 'आगे: घर पर क्या है?'))}`;
+  }
+
+  if (B.step === 'home') {
+    const its = items.filter((i) => i.include || i.sos);
+    const extraHome = S.home.filter((h) => !items.some((i) => i.key === saltKey(normaliseSalt(h.name, h.salt).salt)));
+    return `<div class="screen fade">${head}<p class="sub">${esc(L('Tell us what is already in the medicine box. We only buy what is missing.', 'बताएं डिब्बे में क्या है। सिर्फ कमी वाली दवा खरीदेंगे।'))}</p>
+      ${its.map((it) => { const tab = it.variants[0]?.per_pack != null; const unit = tab ? L('tablets', 'गोली') : L('packs', 'पैक'); return `<div class="card bitem">${pillSvg(medInfo(it.med)?.look, 30)}<div class="grow"><b>${esc(it.med.name)}</b><div class="muted small">${esc(L('At home', 'घर पर'))}: ${esc(qtyLabel(it.have, unit))}</div><div class="row wrap" style="margin-top:6px">${(tab ? [0, 5, 10, 15, 30] : [0, 0.5, 1, 2]).map((v) => `<button class="chip ${it.have === v ? 'on' : ''}" data-a="bhave" data-k="${esc(it.key)}" data-v="${v}" data-u="${tab ? 'tablets' : 'bottle'}" data-n="${esc(it.med.name)}">${v === 0 ? esc(L('None', 'नहीं')) : v}</button>`).join('')}</div></div></div>`; }).join('')}
+      ${S.home.length ? '' : `<button class="btn btn-sm btn-soft" data-a="sampleBox">${esc(L('Quick-fill the medicine box (6 items)', 'दवा का डिब्बा जल्दी भरें (6 चीज़ें)'))}</button>`}
+      ${extraHome.length ? `<div class="group-h">${esc(L('Also in the box', 'डिब्बे में और'))}</div><div class="card">${extraHome.map((h) => { const m = S.plan.meds.find((x) => x.key === saltKey(normaliseSalt(h.name, h.salt).salt)); const why = !m ? L('On no paper: ask the doctor before using', 'किसी कागज़ में नहीं: डॉक्टर से पूछें') : m.status === 'STOPPED' ? L('Stopped: set it aside', 'बंद: अलग रख दें') : L('Course finished: set it aside', 'कोर्स पूरा: अलग रख दें'); return `<div class="li"><span class="em">${m ? '🚫' : '❓'}</span><span class="grow">${esc(h.name)}<br><span class="muted small">${esc(why)}</span></span></div>`; }).join('')}</div>` : ''}
+    </div>${nav('rx', 'bundle', L('Next: build my bundle', 'आगे: बंडल बनाएं'))}`;
+  }
+
+  if (B.step === 'bundle') {
+    const cmp = compareBundle(items);
+    const inBundle = items.filter((i) => i.include);
+    const out = items.filter((i) => !i.include && i.variants.length);
+    const addable = [...new Set(CATALOGUE.map((c) => c.salt))].filter((s) => !items.some((i) => i.key === saltKey(s)));
+    const lowest = Math.min(cmp.split?.total ?? Infinity, cmp.bestSingle?.total ?? Infinity);
+    return `<div class="screen fade">${head}<p class="sub">${esc(L('Everything in one order. Change days, packs or brand; prices update on the next step.', 'सब एक ऑर्डर में। दिन, पैक या ब्रांड बदलें।'))}</p>
+      ${inBundle.map((it) => { const o = offerOn(PLATFORMS[0], it) || PLATFORMS.map((p) => offerOn(p, it)).find(Boolean); const packs = o ? o.packs : 0; const c = o?.product || it.variants[0]; const brands = it.variants.some((v) => !isGeneric(v)) && it.variants.some(isGeneric); return `<div class="card bitem">${pillSvg(medInfo(it.med)?.look, 32)}<div class="grow">
+        <div class="row"><b class="grow">${esc(it.med.name)}</b><button class="x2" data-a="bset" data-k="${esc(it.key)}" data-f="include" data-v="0" aria-label="Remove">✕</button></div>
+        <div class="muted small">${esc(it.sos ? L('Emergency pack', 'आपातकालीन पैक') : itemNeedText(it))}${it.have ? ` · ${esc(L('at home', 'घर पर'))} ${it.have}` : ''}</div>
+        ${it.sos ? '' : `<div class="row wrap" style="margin-top:6px">${[...new Set([it.left && it.left < 30 ? it.left : null, 15, 30, 60].filter(Boolean))].map((d) => `<button class="chip ${it.days === d ? 'on' : ''}" data-a="bset" data-k="${esc(it.key)}" data-f="days" data-v="${d}">${d === it.left && d < 30 ? esc(L(`${d} days (course)`, `${d} दिन (कोर्स)`)) : esc(L(`${d} days`, `${d} दिन`))}</button>`).join('')}</div>`}
+        ${brands ? `<div class="seg" style="margin-top:6px">${[['cheapest', L('Cheapest', 'सबसे सस्ता')], ['generic', L('Generic', 'जेनेरिक')], ['brand', L('Brand', 'ब्रांड')]].map(([v, lab]) => `<button class="${it.variant === v ? 'on' : ''}" data-a="bset" data-k="${esc(it.key)}" data-f="variant" data-v="${v}">${esc(lab)}</button>`).join('')}</div>` : ''}
+        <div class="row" style="margin-top:8px"><span class="grow small">${packs ? `<b>${packs} × ${esc(c.pack)}</b> <span class="muted">${esc(c.product)}</span>` : `<span class="tag t-found">${esc(L('Enough at home', 'घर पर काफी है'))}</span>`}</span><span class="stepper"><button data-a="bpack" data-k="${esc(it.key)}" data-d="-1" data-c="${packs}">−</button><span>${packs}</span><button data-a="bpack" data-k="${esc(it.key)}" data-d="1" data-c="${packs}">+</button></span></div>
+      </div></div>`; }).join('') || `<div class="empty">${esc(L('Your bundle is empty.', 'बंडल खाली है।'))}</div>`}
+      ${out.length ? `<div class="group-h">${esc(L('Removed', 'हटाई गईं'))}</div><div class="card">${out.map((it) => `<div class="li"><span class="grow muted">${esc(it.med.name)}</span><button class="btn btn-sm btn-soft" data-a="bset" data-k="${esc(it.key)}" data-f="include" data-v="1">+ ${esc(L('Add back', 'वापस जोड़ें'))}</button></div>`).join('')}</div>` : ''}
+      ${addable.length ? `<div class="row" style="margin-top:10px"><select id="baddsel" class="searchbox" style="margin:0"><option value="">${esc(L('Add another medicine…', 'और दवा जोड़ें…'))}</option>${addable.map((s) => `<option>${esc(s)}</option>`).join('')}</select><button class="btn btn-sm btn-soft" data-a="badd">+</button></div>` : ''}
+      ${Number.isFinite(lowest) ? `<div class="card hint">💡 ${esc(L(`Lowest price found so far: ₹${inr(lowest)} (MRP ₹${inr(cmp.mrp)})`, `अब तक सबसे कम: ₹${inr(lowest)} (MRP ₹${inr(cmp.mrp)})`))}</div>` : ''}
+    </div>${nav('home', 'compare', L(`Compare ${PLATFORMS.length} pharmacies`, `${PLATFORMS.length} फार्मेसी की तुलना`), inBundle.length ? '' : 'disabled')}`;
+  }
+
+  if (B.step === 'compare') {
+    const cmp = compareBundle(items);
+    const opts = [];
+    if (cmp.split) opts.push({ id: 'split', title: L('Lowest total', 'सबसे कम कुल'), sub: cmp.split.groups.map((g) => `${g.p.short} (${g.its.length})`).join(' + '), total: cmp.split.total, groups: cmp.split.groups.map((g) => ({ p: g.p, lines: g.its.map((x) => ({ it: x.it, o: x.o })), sub: g.sub, fee: g.fee })) });
+    for (const x of cmp.perPlatform.filter((x) => x.complete && x.sub)) opts.push({ id: x.p.id, title: x.p.name, sub: x.p.eta, total: x.total, groups: [{ p: x.p, lines: x.offers.filter((y) => y.o && y.o.packs), sub: x.sub, fee: x.fee }] });
+    const single = cmp.bestSingle; const fastest = cmp.perPlatform.find((x) => x.complete && x.p.id === 'apollo') || null;
+    if (!B.choice || !opts.some((o) => o.id === B.choice)) B.choice = single ? single.p.id : opts[0]?.id;
+    const card = (o, badge) => `<button class="pcard ${B.choice === o.id ? 'on' : ''}" data-a="bchoose" data-k="${o.id}"><div class="row"><span class="radio"></span><span class="grow"><b>${esc(o.title)}</b>${badge ? ` <span class="tag t-live">${esc(badge)}</span>` : ''}<br><span class="muted small">${esc(o.sub)}</span></span><b class="ptotal">₹${inr(o.total)}</b></div>${o.groups.length > 1 ? `<div class="muted small" style="margin-top:4px">${o.groups.map((g) => `${g.p.short}: ${g.lines.map((l) => l.it.med.name.split(' ')[0]).join(', ')}${g.p.pickup ? ' · ' + L('pick up', 'पिकअप') : ''}`).join(' · ')}</div>` : ''}</button>`;
+    const splitO = opts.find((o) => o.id === 'split'), singleO = single && opts.find((o) => o.id === single.p.id), fastO = fastest && opts.find((o) => o.id === 'apollo');
+    const chosen = opts.find((o) => o.id === B.choice);
+    return `<div class="screen fade">${head}<p class="sub">${esc(L(`Same salt and strength everywhere. We checked ${PLATFORMS.length} pharmacies and ${cmp.tried} ways of splitting the order.`, `हर जगह वही साल्ट और ताकत। ${PLATFORMS.length} फार्मेसी और ${cmp.tried} तरीके जांचे।`))}</p>
+      <div class="group-h">${esc(L('Recommended', 'सुझाव'))}</div>
+      ${singleO ? card(singleO, L('One delivery', 'एक डिलीवरी')) : ''}
+      ${splitO && (!singleO || splitO.total < singleO.total) ? card(splitO, L(`Save ₹${inr((singleO?.total ?? splitO.total) - splitO.total)} more`, `₹${inr((singleO?.total ?? splitO.total) - splitO.total)} और बचत`)) : ''}
+      ${fastO && fastO !== singleO ? card(fastO, L('Fastest', 'सबसे तेज़')) : ''}
+      <div class="group-h">${esc(L('All pharmacies', 'सभी फार्मेसी'))}</div>
+      <div class="card ptable">${cmp.perPlatform.map((x) => `<div class="prow ${B.choice === x.p.id ? 'on' : ''}" ${x.complete && x.sub ? `data-a="bchoose" data-k="${x.p.id}"` : ''}><span class="pdot" style="background:${x.p.color}"></span><div class="grow"><b>${esc(x.p.name)}</b><div class="muted small">${esc(x.p.eta)}${x.fee ? ` · ${esc(L('delivery', 'डिलीवरी'))} ₹${x.fee}` : x.p.pickup ? '' : ` · ${esc(L('free delivery', 'मुफ्त डिलीवरी'))}`}${x.missing.length ? ` · <span class="miss">${esc(L(`${x.missing.length} not available`, `${x.missing.length} उपलब्ध नहीं`))}: ${esc(x.missing.map((m) => m.med.name.split(' ')[0]).join(', '))}</span>` : ''}</div></div><b>${x.sub ? '₹' + inr(x.total) : '—'}</b></div>`).join('')}</div>
+      ${chosen ? `<div class="card hint">💰 ${esc(L(`You save ₹${inr(Math.max(0, cmp.mrp - chosen.total))} compared with buying the brands at MRP (₹${inr(cmp.mrp)}).`, `ब्रांड MRP (₹${inr(cmp.mrp)}) के मुकाबले ₹${inr(Math.max(0, cmp.mrp - chosen.total))} की बचत।`))}</div>` : ''}
+      <p class="muted small">${esc(L('Prices, fees and stock are illustrative for this prototype. In production they come live from each pharmacy’s partner API.', 'प्रोटोटाइप में कीमतें उदाहरण हैं।'))}</p>
+    </div>${nav('bundle', 'checkout', chosen ? L(`Continue with ₹${inr(chosen.total)}`, `₹${inr(chosen.total)} के साथ आगे`) : L('Continue', 'आगे'), chosen ? '' : 'disabled')}`;
+  }
+
+  // checkout
+  const cmp = compareBundle(items);
+  const plan = choicePlan(cmp, B.choice);
+  if (!plan) { B.step = 'compare'; return scrBox(); }
+  const rxDocs = [...new Set(items.filter((i) => i.include && !i.extra).map((i) => i.med.source.doc).filter(Boolean))];
+  return `<div class="screen fade">${head}
+    ${plan.groups.map((g) => `<div class="card"><div class="row"><span class="pdot" style="background:${g.p.color}"></span><b class="grow">${esc(g.p.name)}</b><span class="muted small">${esc(g.p.eta)}</span></div>${g.lines.map((l) => `<div class="li small"><span class="grow">${esc(l.o.product.product)}<br><span class="muted">${l.o.packs} × ${esc(l.o.product.pack)} · ₹${inr(l.o.price)} ${esc(L('each', 'प्रति'))}</span></span><b>₹${inr(l.o.total)}</b></div>`).join('')}<div class="li small"><span class="grow">${esc(g.p.pickup ? L('Pick up from the store', 'दुकान से लें') : L('Delivery', 'डिलीवरी'))}</span><b>${g.fee ? '₹' + g.fee : esc(L('Free', 'मुफ्त'))}</b></div></div>`).join('')}
+    <div class="card"><div class="total"><span>${esc(L('Total', 'कुल'))}</span><span>₹${inr(plan.total)}</span></div></div>
+    <div class="card"><b>📎 ${esc(L('Prescription attached', 'पर्चा जुड़ा'))}</b><div class="muted small">${esc(rxDocs.map((d) => `${d} · ${docOf(d)?.title || ''}`).join(', '))}. ${esc(L('A pharmacist checks each item before it is packed.', 'पैक करने से पहले फार्मासिस्ट हर दवा जांचता है।'))}</div></div>
+    <div class="card"><div class="field"><label>${esc(L('Patient', 'मरीज़'))}</label><input data-in="bname" value="${esc(B.name)}"></div><div class="field" style="margin:0"><label>${esc(L('Delivery address', 'पता'))}</label><textarea data-in="baddr" rows="2" class="searchbox" style="margin:0;width:100%">${esc(B.addr)}</textarea></div></div>
+    <div class="card"><b>${esc(L('Pay with', 'भुगतान'))}</b><div class="seg" style="margin-top:6px">${[['upi', 'UPI'], ['card', L('Card', 'कार्ड')], ['cod', L('Cash on delivery', 'कैश')]].map(([v, lab]) => `<button class="${B.pay === v ? 'on' : ''}" data-a="bpay" data-v="${v}">${esc(lab)}</button>`).join('')}</div></div>
+  </div><div class="dock"><button class="btn btn-s" data-a="bstep" data-k="compare">${esc(t('back'))}</button><button class="btn btn-p grow" data-a="bplace">${esc(L(`Place order · ₹${inr(plan.total)}`, `ऑर्डर करें · ₹${inr(plan.total)}`))}</button></div>`;
+}
+function choicePlan(cmp, id) {
+  if (id === 'split' && cmp.split) return { total: cmp.split.total, groups: cmp.split.groups.map((g) => ({ p: g.p, lines: g.its.map((x) => ({ it: x.it, o: x.o })), sub: g.sub, fee: g.fee })) };
+  const x = cmp.perPlatform.find((y) => y.p.id === id && y.complete && y.sub);
+  return x ? { total: x.total, groups: [{ p: x.p, lines: x.offers.filter((y) => y.o && y.o.packs), sub: x.sub, fee: x.fee }] } : null;
+}
+const TRACK = [['Order placed', 'ऑर्डर हुआ'], ['Pharmacist checked the prescription', 'फार्मासिस्ट ने पर्चा जांचा'], ['Packed', 'पैक हुआ'], ['Out for delivery', 'डिलीवरी के लिए निकला'], ['Delivered', 'पहुंच गया']];
+const TRACK_PICKUP = [['Order placed', 'ऑर्डर हुआ'], ['Pharmacist checked the prescription', 'फार्मासिस्ट ने पर्चा जांचा'], ['Ready to pick up', 'लेने के लिए तैयार'], ['Picked up', 'ले लिया']];
+function scrOrderPlaced() {
+  const O = S.buy.order;
+  const msg = `HomeBridge order ${O.id}\n${O.groups.map((g) => `${g.name}: ${g.items.join(', ')} (₹${inr(g.amount)})`).join('\n')}\nTotal ₹${inr(O.total)}\nRefill reminder: ${fmtDate(O.refill)}`;
+  return `<div class="screen fade"><div class="placed"><div style="font-size:40px">✅</div><div class="h2">${esc(L('Order placed (demo)', 'ऑर्डर हो गया (डेमो)'))}</div><div class="muted">${esc(O.id)} · ₹${inr(O.total)} · ${esc(O.pay)}</div></div>
+    ${O.groups.map((g) => { const steps = g.pickup ? TRACK_PICKUP : TRACK; const at = Math.min(steps.length - 1, O.stage); return `<div class="card"><div class="row"><span class="pdot" style="background:${g.color}"></span><b class="grow">${esc(g.name)}</b><span class="muted small">${esc(g.eta)}</span></div><div class="muted small" style="margin:4px 0 8px">${esc(g.items.join(', '))}</div><ol class="track">${steps.map((s, i) => `<li class="${i < at ? 'done' : i === at ? 'on' : ''}"><span></span>${esc(L(s[0], s[1]))}</li>`).join('')}</ol></div>`; }).join('')}
+    <div class="card"><b>🔁 ${esc(L('Refill reminder set', 'रिफिल रिमाइंडर लगा'))}</b><div class="muted small">${esc(L(`We will remind you on ${fmtDate(O.refill)}, 3 days before your ongoing medicines run out, with this bundle ready to reorder.`, `${fmtDate(O.refill, 'hi')} को याद दिलाएंगे, दवा खत्म होने से 3 दिन पहले।`))}</div></div>
+    <div class="stack"><a class="btn btn-wa btn-block" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noreferrer">💬 ${esc(L('Share the order on WhatsApp', 'WhatsApp पर भेजें'))}</a><button class="btn btn-s btn-block" data-a="bnew">${esc(L('Start a new order', 'नया ऑर्डर'))}</button></div>
+  </div>`;
+}
+let trackTimer = null;
+function bundleEdit(key, patch) { const B = buyState(); B.ed[key] = { ...(B.ed[key] || {}), ...patch }; }
 
 // ---------- S11: reminders ----------
 function scrReminders() {
@@ -1825,11 +2048,26 @@ const ACTIONS = {
   opendoc: (el) => { S.sheet = { kind: 'doc', doc: el.dataset.id, quote: S.vaultQ ? (search(S.index, S.vaultQ, 1)[0]?.c.text.split('\n').find((l) => tokenize(l).some((w) => tokenize(S.vaultQ).includes(w))) || '') : '' }; render(); },
   close: () => { S.sheet = null; render(); },
   more: () => { S.sheet = { kind: 'more' }; render(); },
-  restart: () => { Object.assign(S, { screen: 'landing', docs: [], extractions: {}, sourceOf: {}, plan: null, keyPlan: null, golden: null, home: [], tab: 'today', pick: {}, ticks: {}, exTicks: {}, chat: [], visitQs: [], sheet: null, proc: null, condition: 'auto', dates: { discharge: '', treatEnd: '' }, vaultSel: {}, vaultQ: '' }); upCount = 0; render(); },
+  restart: () => { S.buy = null; Object.assign(S, { screen: 'landing', docs: [], extractions: {}, sourceOf: {}, plan: null, keyPlan: null, golden: null, home: [], tab: 'today', pick: {}, ticks: {}, exTicks: {}, chat: [], visitQs: [], sheet: null, proc: null, condition: 'auto', dates: { discharge: '', treatEnd: '' }, vaultSel: {}, vaultQ: '' }); upCount = 0; render(); },
   addq: (el) => { const q = el.dataset.q; if (!S.visitQs.includes(q)) S.visitQs.push(q); toast(L('Added to visit questions', 'पूछने की सूची में जोड़ा')); },
   qty: (el) => { const h = S.home[Number(el.dataset.i)]; const step = h.unit === 'tablets' || h.unit === 'capsules' ? 1 : 0.5; h.qty = Math.max(0, Math.round((h.qty + step * Number(el.dataset.d)) * 10) / 10); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
   waNow: () => waSend(waMessages()),
   waLater: () => { const m = waMessages()[0]; const to = document.getElementById('wato')?.value; if (to) WA.to = to; WA.status = L('Reminder scheduled for 1 minute from now. Carry on with the demo.', '1 मिनट बाद रिमाइंडर जाएगा।'); WA.timer = setTimeout(() => { WA.timer = null; waSend([m], L('Medicine reminder sent', 'दवा रिमाइंडर भेजा')); }, 60000); render(); },
+  bstep: (el) => { const B = buyState(); B.step = el.dataset.k; render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0; },
+  bset: (el) => { const f = el.dataset.f; const v = f === 'include' ? el.dataset.v === '1' : f === 'days' ? Number(el.dataset.v) : el.dataset.v; bundleEdit(el.dataset.k, f === 'days' || f === 'variant' ? { [f]: v, packs: undefined } : { [f]: v }); render(); },
+  bpack: (el) => { const n = Math.max(0, Number(el.dataset.c) + Number(el.dataset.d)); bundleEdit(el.dataset.k, { packs: n }); render(); },
+  bhave: (el) => { const k = el.dataset.k, v = Number(el.dataset.v); let h = S.home.find((x) => saltKey(normaliseSalt(x.name, x.salt).salt) === k); if (!h) { h = { name: el.dataset.n, salt: k, qty: 0, unit: el.dataset.u }; S.home.push(h); } h.qty = v; bundleEdit(k, { packs: undefined }); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
+  badd: () => { const v = document.getElementById('baddsel')?.value; if (!v) return; bundleEdit(saltKey(v), { extra: true, include: true, packs: 1 }); render(); },
+  bchoose: (el) => { buyState().choice = el.dataset.k; render(); },
+  bpay: (el) => { buyState().pay = el.dataset.v; render(); },
+  bplace: () => {
+    const B = buyState(); const items = bundleItems(S.plan, S.home, B.ed); const plan = choicePlan(compareBundle(items), B.choice); if (!plan) return;
+    const ongoing = items.filter((i) => i.include && !i.sos && (i.extra || i.med.long_term || !i.med.duration_days)); const firstOut = Math.min(...(ongoing.length ? ongoing : items.filter((i) => i.include && !i.sos)).map((i) => i.days));
+    B.order = { id: 'HB-' + (100000 + Math.floor(Math.random() * 899999)), total: plan.total, pay: { upi: 'UPI', card: 'Card', cod: 'Cash on delivery' }[B.pay], stage: 0, refill: addDaysIso(T_ISO, Math.max(1, (Number.isFinite(firstOut) ? firstOut : 30) - 3)), groups: plan.groups.map((g) => ({ name: g.p.name, color: g.p.color, eta: g.p.eta, pickup: !!g.p.pickup, amount: g.sub + g.fee, items: g.lines.map((l) => `${l.it.med.name} ×${l.o.packs}`) })) };
+    clearInterval(trackTimer); trackTimer = setInterval(() => { const O = S.buy?.order; if (!O || O.stage >= 3) { clearInterval(trackTimer); return; } O.stage++; if (S.screen === 'box') render(); }, 3500);
+    render(); const sc = document.querySelector('.scroll'); if (sc) sc.scrollTop = 0;
+  },
+  bnew: () => { clearInterval(trackTimer); S.buy = null; render(); },
   sampleBox: () => { S.home = SAMPLE_HOME.map((h) => ({ ...h })); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
   addmed: () => { const v = document.getElementById('newmed').value.trim(); if (!v) return; S.home.push({ name: v, salt: normaliseSalt(v).salt, qty: 10, unit: 'tablets' }); S.plan = buildPlan(S.docs, S.extractions, S.home, S.condition === 'auto' ? null : S.condition); render(); },
   pick: (el) => { S.pick[el.dataset.k] = Number(el.dataset.i); render(); },
@@ -1857,6 +2095,9 @@ document.addEventListener('change', (e) => {
   if (k === 'dDis') S.dates.discharge = e.target.value; else if (k === 'dEnd') S.dates.treatEnd = e.target.value;
   else if (k === 'useLive') S.useLive = e.target.checked;
   else if (k === 'wato') WA.to = e.target.value;
+  else if (k === 'binc') { bundleEdit(e.target.dataset.k, { include: e.target.checked }); }
+  else if (k === 'bname') { buyState().name = e.target.value; return; }
+  else if (k === 'baddr') { buyState().addr = e.target.value; return; }
   else if (k === 'condsel') { const o = e.target.selectedOptions[0]; S.condLabel = e.target.value; S.condition = (o && o.dataset.k) || 'general'; }
   else if (k === 'rPat') S.reminderFor.patient = e.target.checked; else if (k === 'rCare') S.reminderFor.caregiver = e.target.checked;
   else if (k === 'vsel') S.vaultSel[e.target.dataset.id] = e.target.checked;
