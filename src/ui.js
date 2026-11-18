@@ -131,17 +131,24 @@ function scrLanding() {
       <li><span class="n">3</span><div><b>${esc(t('how3'))}</b><div class="muted small">${esc(t('how3b'))}</div></div></li>
     </ol>
     <div class="stack" style="margin:16px 0"><button class="btn btn-p btn-block" data-a="go" data-to="condition">✦ ${esc(t('own'))}</button></div>
-    <div class="banner">🛡️ <span>${esc(t('demo'))}</span></div>
   </div>`;
 }
 
+const CONDITIONS = [
+  ['Cancer', [['Head & neck / mouth / tongue cancer', 'head_neck_cancer'], ['Breast cancer', 'general'], ['Lung cancer', 'general'], ['Colorectal / stomach cancer', 'general'], ['Cervical / uterine cancer', 'general'], ['Blood cancer (leukaemia, lymphoma)', 'general'], ['Other cancer (chemo or radiation)', 'general']]],
+  ['Heart', [['Heart attack / angioplasty (stent)', 'heart_attack'], ['Bypass surgery (CABG)', 'heart_attack'], ['Heart valve surgery', 'general'], ['Pacemaker', 'general']]],
+  ['Bones & joints', [['Knee replacement', 'general'], ['Hip replacement', 'general'], ['Fracture surgery', 'general'], ['Spine surgery', 'general']]],
+  ['Abdomen', [['Gallbladder removal', 'general'], ['Appendix removal', 'general'], ['Hernia repair', 'general'], ['Weight-loss (bariatric) surgery', 'general']]],
+  ['Women’s health', [['C-section delivery', 'general'], ['Hysterectomy', 'general']]],
+  ['Brain, kidney & others', [['Stroke', 'general'], ['Brain surgery', 'general'], ['Kidney stone surgery', 'general'], ['Kidney transplant', 'general'], ['Dialysis', 'general'], ['Prostate surgery', 'general'], ['Thyroid surgery', 'general'], ['Cataract surgery', 'general'], ['ICU stay (pneumonia, dengue, infection)', 'general'], ['Other hospital stay', 'general']]],
+];
 function scrCondition() {
-  const opts = [['auto', '🔎', t('detect'), t('detectB')], ...Object.entries(JOURNEYS).map(([k, j]) => [k, k === 'head_neck_cancer' ? '🎗️' : k === 'heart_attack' ? '❤️' : '🏥', L(j.name.en, j.name.hi), `${j.items.length} ${L('checklist items', 'चेकलिस्ट बातें')}`])];
-  return `<div class="screen fade"><div class="h1">${esc(t('s1T'))}</div><p class="sub">${esc(t('s1S'))}</p>
-    ${opts.map(([k, ic, name, sub]) => `<button class="opt ${S.condition === k ? 'on' : ''}" data-a="cond" data-k="${k}"><span class="ic">${ic}</span><span><b>${esc(name)}</b><br><span class="muted small">${esc(sub)}</span></span></button>`).join('')}
-    <div class="card" style="margin-top:8px"><div class="field"><label>${esc(t('dDis'))}</label><input type="date" data-in="dDis" value="${esc(S.dates.discharge)}"></div>
-    <div class="field" style="margin:0"><label>${esc(t('dEnd'))}</label><input type="date" data-in="dEnd" value="${esc(S.dates.treatEnd)}"></div></div>
-  </div><div class="dock"><button class="btn btn-s" data-a="go" data-to="landing">${esc(t('back'))}</button><button class="btn btn-p grow" data-a="go" data-to="upload">${esc(t('cont'))}</button></div>`;
+  const manual = S.condition !== 'auto';
+  const sel = `<select id="condsel" data-in="condsel" class="searchbox" style="margin:10px 0 0;width:100%"><option value="">${esc(L('Choose the surgery or condition', 'सर्जरी या बीमारी चुनें'))}</option>${CONDITIONS.map(([g, items]) => `<optgroup label="${esc(g)}">${items.map(([label, k]) => `<option value="${esc(label)}" data-k="${k}" ${S.condLabel === label ? 'selected' : ''}>${esc(label)}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  return `<div class="screen fade"><div class="h1">${esc(t('s1T'))}</div><p class="sub">${esc(L('Let the AI find it in your papers, or choose it yourself.', 'AI को कागज़ों से पहचानने दें, या खुद चुनें।'))}</p>
+    <button class="opt ${!manual ? 'on' : ''}" data-a="cond" data-k="auto"><span class="ic">🔎</span><span><b>${esc(t('detect'))}</b><br><span class="muted small">${esc(t('detectB'))}</span></span></button>
+    <div class="opt ${manual ? 'on' : ''}" style="display:block;cursor:pointer" data-a="condManual"><div class="row"><span class="ic">✍️</span><span><b>${esc(L('Enter manually', 'खुद चुनें'))}</b><br><span class="muted small">${esc(L('Pick the surgery or condition from the list', 'सूची से सर्जरी या बीमारी चुनें'))}</span></span></div>${manual ? sel : ''}</div>
+  </div><div class="dock"><button class="btn btn-s" data-a="go" data-to="landing">${esc(t('back'))}</button><button class="btn btn-p grow" data-a="go" data-to="upload" ${manual && !S.condLabel ? 'disabled' : ''}>${esc(t('cont'))}</button></div>`;
 }
 
 function scrUpload() {
@@ -170,10 +177,9 @@ function scrChecklist() {
   const toneOf = (s) => (s === 'FOUND' ? 't-found' : s === 'NOT_YET' ? 't-yet' : 't-miss');
   const lab = (s) => (s === 'FOUND' ? t('found') : s === 'NOT_YET' ? t('notYet') : t('notFound'));
   return `<div class="screen fade"><div class="h1">${esc(t('s4T'))}</div><p class="sub">${esc(t('s4S'))}</p>
-    <div class="card"><div class="row"><b class="grow">${esc(L(j.name.en, j.name.hi))}</b><button class="btn btn-sm btn-s" data-a="go" data-to="condition">${esc(L('Change', 'बदलें'))}</button></div><div class="muted small">${esc(L(S.condition === 'auto' ? 'Detected from your discharge summary' : 'Chosen by you', S.condition === 'auto' ? 'डिस्चार्ज सारांश से पहचाना' : 'आपने चुना'))}</div></div>
+    <div class="card"><div class="row"><b class="grow">${esc(S.condition !== 'auto' && S.condLabel ? S.condLabel : L(j.name.en, j.name.hi))}</b><button class="btn btn-sm btn-s" data-a="go" data-to="condition">${esc(L('Change', 'बदलें'))}</button></div><div class="muted small">${esc(L(S.condition === 'auto' ? 'Detected from your discharge summary' : 'Chosen by you', S.condition === 'auto' ? 'डिस्चार्ज सारांश से पहचाना' : 'आपने चुना'))}</div></div>
     <div class="group-h">${esc(t('docsH'))}</div><div class="card">${g.docs.map((d) => `<div class="li"><span class="grow">${esc(d.en)}</span><span class="tag ${toneOf(d.status)}">${esc(lab(d.status))}</span></div>`).join('')}</div>
     <div class="group-h">${esc(t('itemsH'))}</div><div class="card">${g.items.map((it) => `<div class="li"><div class="grow">${esc(L(it.en, it.hi))}${it.status === 'NOT_FOUND' ? `<div class="row" style="margin-top:6px"><button class="btn btn-sm btn-soft" data-a="addq" data-q="${esc(it.q)}">${S.visitQs.includes(it.q) ? '✓ ' + esc(t('added')) : '+ ' + esc(t('addQ'))}</button></div>` : ''}</div><span class="tag ${toneOf(it.status)}">${esc(lab(it.status))}</span></div>`).join('')}</div>
-    ${g.conflicts.length ? `<div class="group-h">${esc(t('conflictsH'))}</div>${g.conflicts.map((m) => `<div class="card"><b>${esc(m.name)}</b> ${statusTag(m.status)}${m.notes.filter((n) => n.kind === 'conflict').map((n) => `<div class="note conflict">${esc(L(n.en, n.hi))}</div>`).join('')}${m.mentions.map((x) => srcBtn(x.doc, x.quote)).join('<br>')}</div>`).join('')}` : ''}
   </div><div class="dock"><button class="btn btn-p btn-block" data-a="go" data-to="plan">${esc(t('toPlan'))} →</button></div>`;
 }
 
@@ -320,6 +326,8 @@ async function doAsk(q) {
   const hits = search(S.index, q, 5);
   const msg = { role: 'ai', pending: true }; S.chat.push(msg); render();
   let text, cites = [];
+  const pf = planAnswer(q, S.plan, S.lang);
+  if (pf) { msg.pending = false; msg.text = pf.text; msg.cites = [...new Set(pf.cites)].map((id) => ({ doc: id, quote: '' })); msg.mode = L('Calculated from your plan', 'आपकी योजना से गिना गया'); render(); return; }
   if (AI.live) {
     try {
       text = await askLive(q, hits, S.plan, S.lang);
@@ -555,7 +563,7 @@ async function runProcessing() {
   advance(3); await new Promise((r) => setTimeout(r, 400));
   // merge: live result where we have it, else the answer key for sample papers
   for (const d of todo) {
-    if (live[d.id]) { S.extractions[d.id] = live[d.id]; S.sourceOf[d.id] = 'live'; if (live[d.id].doc_date) d.date = live[d.id].doc_date; d.type = live[d.id].doc_type || d.type; if (!d.sample && live[d.id].doc_type) d.title = (DOC_TYPE_LABEL[live[d.id].doc_type]?.en || d.title); }
+    if (live[d.id]) { S.extractions[d.id] = live[d.id]; S.sourceOf[d.id] = 'live'; if (!d.text) d.searchText = extractionText(live[d.id]); if (live[d.id].doc_date) d.date = live[d.id].doc_date; d.type = live[d.id].doc_type || d.type; if (!d.sample && live[d.id].doc_type) d.title = (DOC_TYPE_LABEL[live[d.id].doc_type]?.en || d.title); }
     else if (d.sample) { S.extractions[d.id] = CACHED_EXTRACTIONS[d.id]; S.sourceOf[d.id] = 'key'; }
   }
   advance(4); await new Promise((r) => setTimeout(r, 400));
@@ -602,7 +610,8 @@ const ACTIONS = {
   go: (el) => { if (el.dataset.to === 'plan' && S.screen === 'plan') { S.tab = 'today'; } go(el.dataset.to); },
   sample: () => { S.condition = 'auto'; loadSample(); go('upload'); },
   loadSample: () => { loadSample(); render(); },
-  cond: (el) => { S.condition = el.dataset.k; render(); },
+  cond: (el) => { S.condition = el.dataset.k; S.condLabel = ''; render(); },
+  condManual: (el, e) => { if (e.target.closest('select')) return; if (S.condition === 'auto') { S.condition = 'general'; render(); } },
   rmdoc: (el) => { S.docs = S.docs.filter((d) => d.id !== el.dataset.id); render(); },
   process: () => runProcessing(),
   skipLive: () => { S.proc.cancel = true; S.useLive = false; render(); },
@@ -645,6 +654,7 @@ document.addEventListener('change', (e) => {
   if (k === 'dDis') S.dates.discharge = e.target.value; else if (k === 'dEnd') S.dates.treatEnd = e.target.value;
   else if (k === 'useLive') S.useLive = e.target.checked;
   else if (k === 'wato') WA.to = e.target.value;
+  else if (k === 'condsel') { const o = e.target.selectedOptions[0]; S.condLabel = e.target.value; S.condition = (o && o.dataset.k) || 'general'; }
   else if (k === 'rPat') S.reminderFor.patient = e.target.checked; else if (k === 'rCare') S.reminderFor.caregiver = e.target.checked;
   else if (k === 'vsel') S.vaultSel[e.target.dataset.id] = e.target.checked;
   if (k !== 'vsel') render();
