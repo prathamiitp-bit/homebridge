@@ -432,7 +432,7 @@ const DOC_TYPE_LABEL = {
 // Synonyms used for search and gap matching (English + common Hindi words)
 const SYNONYMS = {
   mouthwash: ['gargle', 'rinse', 'benzydamine', 'chlorhexidine'], gargle: ['mouthwash', 'rinse'], scan: ['pet-ct', 'pet', 'ct', 'mri'], pet: ['pet-ct', 'scan'],
-  thyroid: ['tsh'], tsh: ['thyroid'], bill: ['rs', 'total', 'receipt', 'amount'], money: ['bill', 'total', 'paid'], claim: ['insurance', 'reimbursement', 'cashless'],
+  biopsy: ['histopathology', 'microscopy', 'impression', 'margins'], report: ['impression', 'remarks'], thyroid: ['tsh'], tsh: ['thyroid'], bill: ['rs', 'total', 'receipt', 'amount'], money: ['bill', 'total', 'paid'], claim: ['insurance', 'reimbursement', 'cashless'],
   pain: ['paracetamol', 'lignocaine', 'sos'], 'dry': ['pilocarpine'], doctor: ['opd', 'review', 'follow-up'], visit: ['opd', 'review', 'follow-up'], next: ['after', 'review', 'follow-up'],
   food: ['diet', 'meals'], eat: ['diet', 'meals', 'food'], exercise: ['jaw', 'swallowing', 'exercises'], teeth: ['dental', 'brush', 'fluoride'], emergency: ['warning', 'bleeding', 'fever'],
   'दवा': ['medicine', 'tab'], 'स्कैन': ['scan', 'pet-ct'], 'बिल': ['bill', 'total'], 'थायराइड': ['tsh', 'thyroid'], 'खाना': ['diet', 'food'], 'कसरत': ['exercises', 'jaw'],
