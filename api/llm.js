@@ -33,14 +33,24 @@ export default async function handler(req, res) {
       return res.status(200).json({ text: (j.content || []).map((c) => c.text || '').join('') });
     }
     const parts = [{ text: prompt }, ...images.map((i) => ({ inline_data: { mime_type: i.mime, data: i.data } }))];
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': gemini },
-      body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: { temperature: 0 } }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error?.message || `Gemini ${r.status}`);
-    return res.status(200).json({ text: (j.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('') });
+    // Gemini: try the configured model, then fall back if Google is busy (503/429). Thinking off keeps replies fast.
+    const models = [process.env.GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-flash-latest'].filter((m, i, a) => a.indexOf(m) === i);
+    const budget = Number(process.env.GEMINI_THINKING_BUDGET ?? 0);
+    let lastErr = 'Gemini error';
+    for (const model of models) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': gemini },
+          body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: { temperature: 0, thinkingConfig: { thinkingBudget: budget } } }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok) return res.status(200).json({ text: (j.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join(''), model });
+        lastErr = j.error?.message || `Gemini ${r.status}`;
+        if (r.status !== 503 && r.status !== 429 && r.status !== 500) break;
+        await new Promise((w) => setTimeout(w, 1200));
+      }
+    }
+    throw new Error(lastErr);
   } catch (e) {
     return res.status(502).json({ error: 'The AI could not finish this time.', detail: String(e.message || e).slice(0, 200) });
   }
