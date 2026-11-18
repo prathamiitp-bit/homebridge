@@ -546,7 +546,7 @@ async function runProcessing() {
   const live = {};
   const work = async (d) => {
     if (useLive && !S.proc.cancel && (!d.sample || S.useLive)) {
-      try { live[d.id] = await extractLive(d); S.proc.files[d.id] = { state: 'done', src: 'live', type: live[d.id].doc_type, date: live[d.id].doc_date || d.date }; render(); return; }
+      try { live[d.id] = await extractLive(d).catch(() => new Promise((w) => setTimeout(w, 1500)).then(() => extractLive(d))); S.proc.files[d.id] = { state: 'done', src: 'live', type: live[d.id].doc_type, date: live[d.id].doc_date || d.date }; render(); return; }
       catch (e) { S.proc.error = L(`Live AI could not read ${d.id} (${String(e.message || e).slice(0, 80)}).`, `लाइव AI ${d.id} नहीं पढ़ पाया।`); }
     }
     if (d.sample) { S.proc.files[d.id] = { state: 'done', src: 'key', type: CACHED_EXTRACTIONS[d.id].doc_type, date: d.date }; }
