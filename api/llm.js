@@ -33,8 +33,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ text: (j.content || []).map((c) => c.text || '').join('') });
     }
     const parts = [{ text: prompt }, ...images.map((i) => ({ inline_data: { mime_type: i.mime, data: i.data } }))];
-    // Gemini: try the configured model, then fall back if Google is busy (503/429). Thinking off keeps replies fast.
-    const models = [process.env.GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-flash-latest'].filter((m, i, a) => a.indexOf(m) === i);
+    // Gemini: fast Flash-Lite first, then the bigger model, then fall back if Google is busy (503/429). Thinking off keeps replies fast.
+    const models = [process.env.GEMINI_FAST_MODEL || 'gemini-3.1-flash-lite', process.env.GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-flash-latest'].filter((m, i, a) => a.indexOf(m) === i);
     const budget = Number(process.env.GEMINI_THINKING_BUDGET ?? 0);
     let lastErr = 'Gemini error';
     for (const model of models) {
